@@ -553,22 +553,13 @@ def load(operator, context, filepath, *args, **kwargs):
             vertex_positions = kwargs.get("vertex_positions")
             channel = kwargs.get("channel")
             # Insert new shape key.
-            #new_shapekey =
             ob.shape_key_add('frame_%.4d' % fr)
-            #new_shapekey_name = new_shapekey.name
 
             index = len(ob.data.shape_keys.key_blocks) - 1
             ob.active_shape_key_index = index
 
             shapeKeys = ob.data.shape_keys
             verts = shapeKeys.key_blocks[index].data
-
-#            pos = mayacache.read_channel_at_time(channel=matchlist[ob],
-#                     cachetime=mayacache._frames_to_ticks(fr))
-#
-#            for i, v in enumerate(verts):
-#                    x, y, z = pos[i]
-#                    v.co[:] = x, y, z
 
             pos = vertex_positions[mayacache._frames_to_ticks(fr)][channel]
 
@@ -577,15 +568,12 @@ def load(operator, context, filepath, *args, **kwargs):
                 v.co[:] = x, y, z
 
             # Insert keyframes
-            #bpy.context.scene.frame_current -= 1
             shapeKeys.key_blocks[index].value = 0.0
             shapeKeys.key_blocks[index].keyframe_insert('value', frame=fr - 1)
 
-            #bpy.context.scene.frame_current += 1
             shapeKeys.key_blocks[index].value = 1.0
             shapeKeys.key_blocks[index].keyframe_insert('value', frame=fr)
 
-            #bpy.context.scene.frame_current += 1
             shapeKeys.key_blocks[index].value = 0.0
             shapeKeys.key_blocks[index].keyframe_insert('value', frame=fr + 1)
 
@@ -607,17 +595,6 @@ def load(operator, context, filepath, *args, **kwargs):
             bpy.context.scene.objects.active = ob
             updateMesh(ob, frame, vertex_positions=vertex_positions,
                     channel=matchlist[ob])
-
-#    for ob in matchlist:
-#        print("processing object {} with matching channel {}".format(
-#                ob.name, matchlist[ob]))
-#        if not hasattr(ob.data.shape_keys, "key_blocks"):
-#            ob.shape_key_add('Basis')
-#            ob.data.update()
-#        bpy.context.scene.frame_current = mayacache.startframe
-#        bpy.context.scene.objects.active = ob
-#        for frame in range(mayacache.startframe, mayacache.endframe + 1):
-#            updateMesh(ob, frame)
 
     posttime = time()
 
