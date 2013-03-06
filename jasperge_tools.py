@@ -22,7 +22,7 @@ bl_info = {
     "name": "jasperge tools",
     "description": "Assorted tools",
     "author": "Sergey Sharybin, jasperge",
-    "version": (0, 1),
+    "version": (0, 2),
     "blender": (2, 62, 3),
     "location": "Select an Object: Tool Shelf",
     "wiki_url": "",
@@ -38,8 +38,9 @@ import glob
 class OBJECT_OT_copy_modifier_settings(Operator):
     """Copy settings of modifiers from active object to """
     """all other selected objects."""
-    
-    bl_description = "Copy settings of modifiers from active object to all other selected objects."
+
+    bl_description = "Copy settings of modifiers from active object to all"\
+            " other selected objects."
     bl_idname = "object.copy_modifier_settings"
     bl_label = "Copy Modifier Settings"
     bl_space_type = 'VIEW_3D'
@@ -121,9 +122,11 @@ class OBJECT_OT_copy_modifier_settings(Operator):
 
 
 class OBJECT_OT_modifier_viewport_off(Operator):
-    """Turn off all the modifiers (except 'ARMATURE') in the viewport."""
-    
-    bl_description = "Turn off all modifiers (except 'ARMATURE' in the viewport."
+    """Turn off all the modifiers (except 'ARMATURE', 'CURVE' and
+     'SIMPLE_DEFORM) in the viewport."""
+
+    bl_description = "Turn off all the modifiers (except 'ARMATURE', 'CURVE' and"\
+            " 'SIMPLE_DEFORM) in the viewport."
     bl_idname = "object.modifier_viewport_off"
     bl_label = "Modifiers viewport off"
     bl_space_type = 'VIEW_3D'
@@ -141,7 +144,7 @@ class OBJECT_OT_modifier_viewport_off(Operator):
 
 class OBJECT_OT_modifier_viewport_on(Operator):
     """Turn on all the modifiers in the viewport."""
-    
+
     bl_description = "Turn on all modifiers in the viewport."
     bl_idname = "object.modifier_viewport_on"
     bl_label = "Modifiers viewport on"
@@ -160,50 +163,50 @@ class OBJECT_OT_modifier_viewport_on(Operator):
 
 class OBJECT_OT_wire_on(Operator):
     """Turn on the wire display option for all mesh objects."""
-    
+
     bl_description = "Turn on the wire display option for all mesh objects."
     bl_idname = "object.wire_on"
     bl_label = "Wire on"
     bl_space_type = 'VIEW_3D'
-    
+
     def execute(self, context):
         mesh_objects = [ob for ob in bpy.data.objects if ob.type == 'MESH']
         for ob in mesh_objects:
             ob.show_wire = True
             ob.show_all_edges = True
-        
+
         return {'FINISHED'}
 
 
 class OBJECT_OT_wire_off(Operator):
     """Turn off the wire display option for all mesh objects."""
-    
+
     bl_description = "Turn off the wire display option for all mesh objects."
     bl_idname = "object.wire_off"
     bl_label = "Wire off"
     bl_space_type = 'VIEW_3D'
-    
+
     def execute(self, context):
         mesh_objects = [ob for ob in bpy.data.objects if ob.type == 'MESH']
         for ob in mesh_objects:
             ob.show_wire = False
             ob.show_all_edges = False
-        
+
         return {'FINISHED'}
 
 
 class FILE_incremental_save(Operator):
     """Do an incremental save for the file (like in Maya).
-    
+
     Saves the file with the current name, but also saves a copy in the
     incremental save folder.
     (./incrementalSave/<filename>/<filename>.xxxx.blend)"""
-    
+
     bl_description = "Do an incremental save for the file (like in Maya)."
     bl_idname = "file.incremental_save"
     bl_label = "Incremental Save"
     bl_space_type = 'VIEW_3D'
-    
+
     def execute(self, context):
         # Get all file and dir names.
         filepath = bpy.data.filepath
@@ -212,13 +215,13 @@ class FILE_incremental_save(Operator):
         filebasename = os.path.splitext(filename)[0]
         incr_save_dir = os.path.join(workdir, "incrementalSave")
         incr_save_file_dir = os.path.join(incr_save_dir, filename)
-        
+
         # Create incremental save dirs if needed.
         if not os.path.isdir(incr_save_dir):
             os.mkdir(incr_save_dir)
         if not os.path.isdir(incr_save_file_dir):
             os.mkdir(incr_save_file_dir)
-        
+
         # Check number of incremental save files.
         incr_files = glob.glob(os.path.join(
             incr_save_file_dir,
@@ -233,7 +236,7 @@ class FILE_incremental_save(Operator):
             file_num = 0
         new_incr_filename = "%s.%.4d.blend" % (filebasename, file_num)
         new_incr_file = os.path.join(incr_save_file_dir, new_incr_filename)
-        
+
         bpy.ops.wm.save_as_mainfile(
             filepath=new_incr_file,
             check_existing=False,
@@ -241,7 +244,7 @@ class FILE_incremental_save(Operator):
             copy=True,
             )
         bpy.ops.wm.save_mainfile(check_existing=False)
-        
+
         return {'FINISHED'}
 
 
@@ -255,13 +258,13 @@ class VIEW3D_PT_modifiers(Panel):
         col = layout.column(align=True)
         col.label(text="File:")
         col.operator("file.incremental_save")
-        
+
         col = layout.column(align=True)
         col.label(text="Modifiers:")
         col.operator("object.copy_modifier_settings")
         col.operator("object.modifier_viewport_off")
         col.operator("object.modifier_viewport_on")
-        
+
         col = layout.column(align=True)
         col.label(text="Object:")
         row = col.row(align=True)
