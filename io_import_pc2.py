@@ -24,9 +24,7 @@ bl_info = {
               " Bill L. Nieuwendorp",
     "version": (0, 5),
     "blender": (2, 5, 8),
-    "api": 35764,
     "location": "File > Import > Pointcache (.pc2)",
-    "warning": "wip",
     "wiki_url": "",
     "tracker_url": "",
     "category": "Import-Export"}
