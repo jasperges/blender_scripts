@@ -43,7 +43,11 @@ bl_info = {
 
 # Import modules.
 import bpy
-from bpy.props import StringProperty, IntProperty, FloatProperty, BoolProperty, EnumProperty
+from bpy.props import (StringProperty,
+                       IntProperty,
+                       FloatProperty,
+                       BoolProperty,
+                       EnumProperty)
 from mathutils import Vector
 import random
 
@@ -62,54 +66,52 @@ Usage:
 
 def check_materials(ob1, ob2):
     """
-    
+
     check_materials(ob1, ob2)
-    
+
     Check if and which materials of ob1 are also on ob2.
-    
+
         Parameters:
             ob1 - The first object.
             ob2 - The second object.
-        
+
         Returns:
             A list with the material names that are both in ob1 and ob2.
             (An empty list if no matching materials are found.)
-    
+
     """
-    
+
     if len(ob1.material_slots) > 0:
         match_mats = [m.material for m in ob1.material_slots
                       if m.material in ob2.material_slots]
     else:
         match_mats = []
-    
+
     return match_mats
-            
-            
 
 
 def get_random_point(ob, self, material=None):
     """
-    
+
     get_random_point(ob)
-    
+
     Get a random point in space on the (selected faces) of an object.
-    
+
         Parameters:
             ob - The object to work on.
             self - The class instance.
             material - A material.
-        
+
         Returns:
             The coordinate of the random point in world space as a vector and
             the material of the face on which the point lies.
-    
+
     """
-    
+
     faces_opt = self.faces
     use_mat = self.use_mat
     mat_index = None
-    
+
     if faces_opt == 'SELECTED':
         # Get the selected faces.
         faces = [f for f in ob.data.polygons if f.select]
@@ -118,7 +120,7 @@ def get_random_point(ob, self, material=None):
         faces = ob.data.polygons
     # Get a random face.
     face = faces[random.randrange(len(faces))]
-    
+
     # If no material is passed, this means either we have a face on object 1
     # and want to pass the material of the face or we have a face on object 2
     # and no material was found on the face on object 1.
@@ -126,7 +128,7 @@ def get_random_point(ob, self, material=None):
         if len(ob.material_slots) > 0:
             mat_index = face.material_index
             material = ob.material_slots[mat_index].material
-    
+
     # If a material is passed, this means we are on object 2 and have to get a
     # face which also has this material.
     if material and use_mat == True:
@@ -146,7 +148,7 @@ def get_random_point(ob, self, material=None):
         else:
             #raise ValueError("Didn't find a face in object '%s' with material '%s'." % (ob.name, material.name))
             pass
-    
+
     vert1_index = face.vertices[0]    # Returns index number of vertex.
     # Get the two connected vertices.
     conn_verts = []
@@ -161,7 +163,7 @@ def get_random_point(ob, self, material=None):
     vert1 = ob.data.vertices[vert1_index]
     vert2 = ob.data.vertices[vert2_index]
     vert3 = ob.data.vertices[vert3_index]
-    
+
     # Now create two vectors from vert1 to vert2 and vert3.
     face_vec1 = (vert2.co) - (vert1.co)
     face_vec2 = (vert3.co) - (vert1.co)
@@ -172,15 +174,15 @@ def get_random_point(ob, self, material=None):
     # to have them in world space instead of local space.
     wmtx = ob.matrix_world
     random_point = wmtx * random_point
-    
+
     return random_point, material, mat_index
 
 
-def wire_points(**kwargs):    
+def wire_points(**kwargs):
     """
-    
+
     wire_points(**kwargs)
-    
+
     Creates one or more wires (bezier curves) between two points.
 
         Keyword arguments:
@@ -204,12 +206,12 @@ def wire_points(**kwargs):
                          Default is 0.
             midpoint_random_v - The random offset of the midpoint along the v 'axis'.
                                 Default is 0.
-    
+
         Returns:
             A list with lists of x,y,z coordinates for curve points, [[x,y,z],[x,y,z],...n]
-        
+
     """
-    
+
     # Pull out the variables.
     start_point = kwargs.setdefault("start_point", Vector((-1, 0, 0)))
     end_point = kwargs.setdefault("end_point", Vector((1, 0, 0)))
@@ -221,7 +223,7 @@ def wire_points(**kwargs):
     midpoint_random_u = kwargs.setdefault("midpoint_random_u", 0)
     midpoint_v = kwargs.setdefault("midpoint_v", 0)
     midpoint_random_v = kwargs.setdefault("midpoint_random_v", 0)
-    
+
     # Calculate the middle point according to the settings:
     # drape, drape_random, midpoint_random_u, midpoint_random_v.
     # Get the vector from start_point to end_point.
@@ -245,14 +247,14 @@ def wire_points(**kwargs):
     mid_point += perp_vec * midpoint_v
     # Add random offset in curve v axis.
     mid_point += perp_vec * rand * midpoint_random_v
-    
+
     # Calculate the positions of the start_point_right_handle and the
     # end_point_left_handle according to start_drape and start_drape_random.
     start_point_right = start_point + (curve_vec * start_drape)
     start_point_right += (curve_vec * start_drape_random * random.random())
     end_point_left = end_point - (curve_vec * start_drape)
     end_point_left += - (curve_vec * start_drape_random * random.random())
-    
+
     curve_points = [
                     start_point,
                     mid_point,
@@ -260,36 +262,36 @@ def wire_points(**kwargs):
                     start_point_right,
                     end_point_left,
                     ]
-    
+
     return curve_points
 
 
 def create_wire(curve_points, num, self, curve_mat, curve_object=None):
-    
+
     """
-    
+
     create_wire(curve_points, self, curve_object=None)
-    
+
     Creates one or more wires (bezier curves) between two points.
 
         Arguments:
             curve_points - The points for the curve (should be 3 points).
             self - The class instance.
             curve_object - (optional) The curve object to add the spline to.
-    
+
         Returns:
             The (newly created) wire object.
-        
+
     """
-    
+
     midpoint_tangent = self.midpoint_tangent
     assign_mats = self.assign_mats
-    
+
     # Options to variables.
     name = "%s%.3d_crv" % (self.name, num + 1)
     if not name:
         name = "wire%.3d_crv" % num + 1
-    
+
     # Create the wire curve.
     scene = bpy.context.scene
     if curve_object:
@@ -297,25 +299,25 @@ def create_wire(curve_points, num, self, curve_mat, curve_object=None):
     else:
         new_curve = bpy.data.curves.new(name, type='CURVE')
         new_curve.dimensions = '3D'
-        new_curve.fill_mode = 'FULL' 
-    new_spline = new_curve.splines.new(type = 'BEZIER')
-    
+        new_curve.fill_mode = 'FULL'
+    new_spline = new_curve.splines.new(type='BEZIER')
+
     # Create the spline from curve_points.
     new_spline.bezier_points.add(int(len(curve_points)) - 3)
     for i, p in enumerate(new_spline.bezier_points):
         p.co = curve_points[i]
-    
+
     # Set the curve options.
     new_curve.resolution_u = self.wire_resolution
     new_curve.render_resolution_u = self.wire_render_resolution
     new_curve.bevel_depth = self.wire_bevel_depth
     new_curve.bevel_resolution = self.wire_bevel_resolution
-    
+
     # Create an object with new_curve
     if not curve_object:
-        new_obj = bpy.data.objects.new(name, new_curve) # object
-        scene.objects.link(new_obj) # place in active scene
-        
+        new_obj = bpy.data.objects.new(name, new_curve)  # object
+        scene.objects.link(new_obj)  # place in active scene
+
         # Assign material to the wire if 'assign_mats' is checked.
         # TODO: Add material to curve object if needed.
         if assign_mats:
@@ -325,38 +327,36 @@ def create_wire(curve_points, num, self, curve_mat, curve_object=None):
                 for slot in new_obj.material_slots:
                     if slot.material == curve_mat:
                         new_spline.material_index = curve_mat
-            if mat_index:
-                new_spline.material_index = mat_index
-                
-                
-                # First check if the object has the passed material.
-        if len(ob.material_slots) > 0:
-            for slot in ob.material_slots:
-                if slot.material == material:
+            #if mat_index:
+            #    new_spline.material_index = mat_index
+
+        # First check if the object has the passed material.
+        #if len(new_obj.material_slots) > 0:
+            #for slot in new_obj.material_slots:
+                #if slot.material == curve_mat:
                     # If the material is found on the object, check if the
                     # face has this material.
-                
-                
+
     else:
         new_obj = curve_object
     bpy.ops.object.select_all(action='DESELECT')
-    new_obj.select = True # set as selected
+    new_obj.select = True  # set as selected
     scene.objects.active = new_obj  # set as active
-    
+
     bezier_points = new_spline.bezier_points
-    
+
     # Set the type of all the points' handles to 'AUTO'.
     for i, p in enumerate(bezier_points):
         bezier_points[i].handle_left_type = 'AUTO'
         bezier_points[i].handle_right_type = 'AUTO'
-    
+
     # Set the type of the end points handles to 'FREE'
     # and change their position.
     bezier_points[0].handle_right_type = 'FREE'
     bezier_points[-1].handle_left_type = 'FREE'
     bezier_points[0].handle_right = curve_points[-2]
     bezier_points[-1].handle_left = curve_points[-1]
-    
+
     # Change the tangent of the mid_point(s).
     # Get the midpoint(s) (in case there will be more in the future).
     midpoints = []
@@ -372,27 +372,27 @@ def create_wire(curve_points, num, self, curve_mat, curve_object=None):
         # Set the handles according to midpoint_tangent.
         mp.handle_left = mp.co + mp_left_vec * midpoint_tangent
         mp.handle_right = mp.co + mp_right_vec * midpoint_tangent
-    
+
     return new_obj
 
 
 def main(context, self):
-    
+
     """
-    
+
     main(context, self)
-    
+
     The main function of add_curve_wires. This handles the real creation of the wire(s).
 
         Arguments:
             context - The context.
             self - The class instance.
-    
+
         Returns:
             A list of the created wire object(s).
-        
+
     """
-    
+
     # Get the selected objects.
     #try:
     # Make sure exactly TWO objects are selected.
@@ -406,7 +406,7 @@ def main(context, self):
     # Make sure the objects are 'MESH' objects.
     if ob1.type != 'MESH' or ob2.type != 'MESH':
         raise TypeError("You have to select exactly two MESH objects.")
-    
+
     # Get the options.
     num_wires = self.num_wires
     seed = self.seed
@@ -420,33 +420,33 @@ def main(context, self):
     midpoint_random_u = self.midpoint_random_u
     midpoint_v = self.midpoint_v
     midpoint_random_v = self.midpoint_random_v
-    
+
     # If use_mat, check if objects have matching materials.
     # If not, ignore this setting.
     #match_mats = check_materials(ob1, ob2)
-    
+
     # Make num_wires amount of wires, so put this in a for loop.
     curve_object = None
     new_objects = []
     random.seed(seed)
     for i in range(num_wires):
         # Get the points for the curve.
-        start_point, material = get_random_point(ob1, self)
+        start_point, material, mat_index = get_random_point(ob1, self)
         curve_mat = material
-        end_point, material = get_random_point(ob2, self, material)
+        end_point, material, mat_index = get_random_point(ob2, self, material)
         curve_points = wire_points(
-                                   start_point = start_point,
-                                   end_point = end_point,
-                                   start_drape = start_drape,
-                                   start_drape_random = start_drape_random,
-                                   drape = drape,
-                                   drape_random = drape_random,
-                                   midpoint_u = midpoint_u,
-                                   midpoint_random_u = midpoint_random_u,
-                                   midpoint_v = midpoint_v,
-                                   midpoint_random_v = midpoint_random_v,
+                                   start_point=start_point,
+                                   end_point=end_point,
+                                   start_drape=start_drape,
+                                   start_drape_random=start_drape_random,
+                                   drape=drape,
+                                   drape_random=drape_random,
+                                   midpoint_u=midpoint_u,
+                                   midpoint_random_u=midpoint_random_u,
+                                   midpoint_v=midpoint_v,
+                                   midpoint_random_v=midpoint_random_v,
                                   )
-        
+
         # Create the object.
         if self.one_object:
             curve_object = create_wire(
@@ -474,13 +474,13 @@ class Wires(bpy.types.Operator):
     bl_idname = "curve.wires"
     bl_label = "Create wire(s)"
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
-    
+
     def __init__(self):
         # Because creating a lot of wires can take some time and slow down the
         # viewport, set the initial amount of wires to 50 if it is higher.
         if self.num_wires > 50:
             self.num_wires = 50
-    
+
     name = StringProperty(
                           name="Name",
                           description="The (base)name of the wire object(s).",
@@ -634,13 +634,12 @@ class Wires(bpy.types.Operator):
                                          max=64,
                                          soft_max=32,
                                          )
-    
+
     # Draw
     def draw(self, context):
         layout = self.layout
-        
+
         # Options
-        col = layout.column()
         box = layout.box()
         box.prop(self, 'name')
         box.prop(self, 'num_wires')
@@ -671,30 +670,30 @@ class Wires(bpy.types.Operator):
         box.prop(self, 'wire_bevel_resolution')
         box.prop(self, 'wire_resolution')
         box.prop(self, 'wire_render_resolution')
-    
+
     # Poll
     @classmethod
     def poll(cls, context):
         return context.scene != None
-    
+
     # Execute
     def execute(self, context):
         # Turn off undo. Copied this from curveaceous_galore. Don't know why this is.
         #bpy.context.user_preferences.edit.use_global_undo = True
         #bpy.context.user_preferences.edit.use_global_undo = False
-        
+
         # Run main function.
         main(context, self)
-        
+
         # Restore pre-operator undo state.
         #bpy.context.user_preferences.edit.use_global_undo = True
-        
+
         return {'FINISHED'}
-    
+
     # Invoke
     def invoke(self, context, event):
         self.execute(context)
-        
+
         return {'FINISHED'}
 
 
@@ -708,10 +707,12 @@ def register():
 
     bpy.types.INFO_MT_curve_add.append(Wires_button)
 
+
 def unregister():
     bpy.utils.unregister_module(__name__)
 
     bpy.types.INFO_MT_curve_add.remove(Wires_button)
+
 
 if __name__ == "__main__":
     register()
