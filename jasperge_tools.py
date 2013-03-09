@@ -18,24 +18,25 @@
 
 # <pep8 compliant>
 
+# The 'copy modifier settings' is from an addon by Sergey Sharybin.
+
 bl_info = {
     "name": "jasperge tools",
     "description": "Assorted tools",
-    "author": "Sergey Sharybin, jasperge",
-    "version": (0, 2),
+    "author": "jasperge",
+    "version": (0, 3),
     "blender": (2, 62, 3),
-    "location": "Select an Object: Tool Shelf",
+    "location": "View 3D > Toolbar / View 3D - Shift + Q (gives a menu)",
     "wiki_url": "",
     "tracker_url": "",
-    "category": "Object"}
+    "category": "3D View"}
 
 import bpy
-from bpy.types import Operator, Panel
 import os
 import glob
 
 
-class OBJECT_OT_copy_modifier_settings(Operator):
+class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
     """Copy settings of modifiers from active object to """
     """all other selected objects."""
 
@@ -121,7 +122,7 @@ class OBJECT_OT_copy_modifier_settings(Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_modifier_viewport_off(Operator):
+class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
     """Turn off all the modifiers (except 'ARMATURE', 'CURVE' and
      'SIMPLE_DEFORM) in the viewport."""
 
@@ -142,7 +143,7 @@ class OBJECT_OT_modifier_viewport_off(Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_modifier_viewport_on(Operator):
+class OBJECT_OT_modifier_viewport_on(bpy.types.Operator):
     """Turn on all the modifiers in the viewport."""
 
     bl_description = "Turn on all modifiers in the viewport."
@@ -161,7 +162,7 @@ class OBJECT_OT_modifier_viewport_on(Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_wire_on(Operator):
+class OBJECT_OT_wire_on(bpy.types.Operator):
     """Turn on the wire display option for all mesh objects."""
 
     bl_description = "Turn on the wire display option for all mesh objects."
@@ -178,7 +179,7 @@ class OBJECT_OT_wire_on(Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_wire_off(Operator):
+class OBJECT_OT_wire_off(bpy.types.Operator):
     """Turn off the wire display option for all mesh objects."""
 
     bl_description = "Turn off the wire display option for all mesh objects."
@@ -195,21 +196,32 @@ class OBJECT_OT_wire_off(Operator):
         return {'FINISHED'}
 
 
-class FILE_incremental_save(Operator):
+class FILE_incremental_save(bpy.types.Operator):
     """Do an incremental save for the file (like in Maya).
 
     Saves the file with the current name, but also saves a copy in the
     incremental save folder.
-    (./incrementalSave/<filename>/<filename>.xxxx.blend)"""
+    (./incrementalSave/<filename>/<filename>.xxxx.blend)
+    There is no limitation for the amount of incremental save files"""
 
-    bl_description = "Do an incremental save for the file (like in Maya)."
+    bl_description = "Do an incremental save for the file (Maya style)."
     bl_idname = "file.incremental_save"
     bl_label = "Incremental Save"
-    bl_space_type = 'VIEW_3D'
 
     def execute(self, context):
+
+        # To avoid double 'backup saving' we need to set the 'Save Versions'
+        # in the user preferences to 0.
+        user_prefs = context.user_preferences
+        save_versions = user_prefs.filepaths.save_version  # Store for later
+        user_prefs.filepaths.save_version = 0
+
         # Get all file and dir names.
         filepath = bpy.data.filepath
+        avoid_double_save = None
+        if not filepath:
+            bpy.ops.wm.save_mainfile('INVOKE_DEFAULT')
+            avoid_double_save = True
         workdir = os.path.dirname(filepath)
         filename = bpy.path.basename(filepath)
         filebasename = os.path.splitext(filename)[0]
@@ -229,8 +241,8 @@ class FILE_incremental_save(Operator):
             ))
         if incr_files:
             incr_files.sort()   # Sort list, just to be sure.
-            last_file = incr_files[-1]
-            last_file_num = int(os.path.splitext(last_file)[0].split(".")[-1])
+            last_file_num = int(os.path.splitext(
+                    incr_files[-1])[0].split(".")[-1])
             file_num = last_file_num + 1
         else:
             file_num = 0
@@ -243,15 +255,21 @@ class FILE_incremental_save(Operator):
             compress=True,
             copy=True,
             )
-        bpy.ops.wm.save_mainfile(check_existing=False)
+
+        if not avoid_double_save:
+            bpy.ops.wm.save_mainfile(check_existing=False)
+
+        # Restore user preferences.
+        user_prefs.filepaths.save_version = save_versions
 
         return {'FINISHED'}
 
 
-class VIEW3D_PT_modifiers(Panel):
+class VIEW3D_PT_modifiers(bpy.types.Panel):
+    bl_label = "jasperge tools"
+    bl_idname = "VIEW3D_PT_jasperge_tools"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
-    bl_label = "jasperge tools"
 
     def draw(self, context):
         layout = self.layout
@@ -261,9 +279,10 @@ class VIEW3D_PT_modifiers(Panel):
 
         col = layout.column(align=True)
         col.label(text="Modifiers:")
-        col.operator("object.copy_modifier_settings")
-        col.operator("object.modifier_viewport_off")
-        col.operator("object.modifier_viewport_on")
+        col.operator("object.copy_modifier_settings", text="Cpy Settings")
+        row = col.row(align=True)
+        row.operator("object.modifier_viewport_on", text="Viewport On")
+        row.operator("object.modifier_viewport_off", text="Viewport Off")
 
         col = layout.column(align=True)
         col.label(text="Object:")
@@ -272,12 +291,59 @@ class VIEW3D_PT_modifiers(Panel):
         row.operator("object.wire_off")
 
 
+class JaspergeToolsMenu(bpy.types.Menu):
+    bl_description = "jasperge tools menu"
+    bl_idname = "VIEW3D_MT_jasperge_tools_menu"
+    bl_label = "jasperge tools"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("file.incremental_save",
+                text="Incremental Save")
+        layout.separator()
+        layout.operator("object.copy_modifier_settings",
+                text="Copy Modifier Settings")
+        layout.operator("object.modifier_viewport_on",
+                text="Modifiers Viewport On")
+        layout.operator("object.modifier_viewport_off",
+                text="Modifiers Viewport Off")
+        layout.separator()
+        layout.operator("object.wire_on",
+                text="Wireframe Display On")
+        layout.operator("object.wire_off",
+                text="Wireframe Display Off")
+
+
+jasperge_tools_keymaps = list()
+
+
 def register():
     bpy.utils.register_module(__name__)
+    wm = bpy.context.window_manager
+    for mode in (
+            "Object Mode",
+            "Mesh",
+            "Curve",
+            "Armature",
+            "Metaball",
+            "Lattice",
+            "Font",
+            "Pose",
+            "Vertex Paint",
+            "Weight Paint",
+            "Sculpt",
+            ):
+        km = wm.keyconfigs.addon.keymaps.new(name=mode)
+        kmi = km.keymap_items.new("wm.call_menu", "Q", "PRESS", shift=True)
+        kmi.properties.name = "VIEW3D_MT_jasperge_tools_menu"
 
 
 def unregister():
     bpy.utils.unregister_module(__name__)
+    wm = bpy.context.window_manager
+    for km in jasperge_tools_keymaps:
+        wm.keyconfigs.addon.keymaps.remove(km)
+    del jasperge_tools_keymaps[:]
 
 
 if __name__ == "__main__":
