@@ -1,0 +1,102 @@
+blender_scripts
+
+Various addons and scripts for Blender 3D
+
+=========================================
+
+
+io_import_mc
+
+*WIP*
+Addon to import Maya Cache files (.xml + .mc) files.
+Only geometry caches are supported (ChannelInterpretation="positions").
+It tries to match the channel names with the objects in the scene. If e.g. the
+channel name is "my_nice_meshShape" then it looks if the object "my_nice_mesh"
+exists.
+
+Todo:
+* Add support for cachetype 'OneFilePerFrame'.
+* Make the settings in the import file browser work (they are ignored at the
+  moment).
+* Use the 'self.report' for proper error and info messages.
+* ...
+* Integrate in a bigger import/export pipeline.
+* Eventually add .mc support to the 'Mesh Cache' modifier.
+
+------------------------------------------------------------------------------
+
+add_curve_wires
+
+Creates (hanging) wires between two objects. You can create them between the
+selected faces and have them connect faces with the same material.
+
+Todo:
+* Cleanup.
+* Maybe improve/add stuff.
+
+------------------------------------------------------------------------------
+
+io_export_objFolder
+
+Export (the selected) objects as .obj's to a chosen directory.
+
+Todo:
+* Integrate in a bigger import/export pipeline
+
+------------------------------------------------------------------------------
+
+io_import_caches
+
+Import geometry caches (only .pc2 and .mdd at the moment). It tries to match
+the name from a cache file with an object (e.g. 'my_mesh.pc2' > 'my_mesh').
+If you select/choose one or more cache files, only these will be imported. If
+you don't select any files, all cache files in the directory will be imported.
+You can choose if you want to import them as shapekeys or use the 'Mesh Cache'
+modifier (default and recommended).
+
+Todo:
+* Settings (for re-timing) of the cache(s)
+    - modifier: set all settings for the modifier in the import file browser.
+    - shapekeys: specify frame offset, scale and interpolation
+* Only import cache(s) for the selected object(s) (for convenience).
+* Integrate in a bigger import/export pipeline.
+
+------------------------------------------------------------------------------
+
+io_import_objects
+
+Import all or only the selected .obj files. If you select one or more .obj
+files, only these will be imported. If you don't select/choose any file,
+all files in the directory will be imported.
+
+Todo:
+* Allow user to set the settings for the importer.
+* Support more file formats.
+* Integrate in a bigger import/export pipeline.
+
+------------------------------------------------------------------------------
+
+io_import_pc2
+
+Import .pc2 pointcache file as shapekeys. You have to select a mesh object for
+which to import the pointcache.
+
+Todo:
+* Add more options (scale and interpolation).
+* Integrate in a bigger import/export pipeline.
+
+------------------------------------------------------------------------------
+
+jasperge_tools
+
+Several simple tools to use:
+* Incremental save like Maya has (for convenience in mixed software projects).
+* Copy modifier settings from the active object to the selected object(s).
+* Turn off/on the modifiers in the viewport (except: 'ARMATURE', 'CURVE' and
+  'SIMPLE DEFORM') for all objects.
+* Turn on/off wireframes for all objects.
+
+Todo:
+* Allow a limit for the number of incremental save files.
+* Turn off/on modifiers and wireframes only for selected objects.
+* Add more tools if I need them...
