@@ -36,7 +36,7 @@ Todo:
 
 ------------------------------------------------------------------------------
 
-io_export_objFolder
+io_export_objects
 
 Export (the selected) objects as .obj's to a chosen directory.
 
@@ -98,5 +98,5 @@ Several simple tools to use:
 
 Todo:
 * Allow a limit for the number of incremental save files.
-* Turn off/on modifiers and wireframes only for selected objects.
+* Maybe turn off/on modifiers and wireframes only for selected objects.
 * Add more tools if I need them...
