@@ -32,7 +32,7 @@ bl_info = {
 
 import bpy
 from bpy.types import Operator
-from bpy.props import BoolProperty, IntProperty, StringProperty
+from bpy.props import BoolProperty, StringProperty
 from bpy_extras.io_utils import ExportHelper
 from os import path
 from time import time
