@@ -126,8 +126,8 @@ class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
     """Turn off all the modifiers (except 'ARMATURE', 'CURVE' and
      'SIMPLE_DEFORM) in the viewport."""
 
-    bl_description = "Turn off all the modifiers (except 'ARMATURE', 'CURVE' and"\
-            " 'SIMPLE_DEFORM) in the viewport."
+    bl_description = "Turn off all the modifiers (except 'ARMATURE', 'CURVE'"\
+            "and 'SIMPLE_DEFORM) in the viewport."
     bl_idname = "object.modifier_viewport_off"
     bl_label = "Modifiers viewport off"
     bl_space_type = 'VIEW_3D'
@@ -262,29 +262,32 @@ class FILE_incremental_save(bpy.types.Operator):
         # Restore user preferences.
         user_prefs.filepaths.save_version = save_versions
 
+        print("Incremental saved: {}".format(new_incr_filename))
+
         return {'FINISHED'}
 
 
-class VIEW3D_PT_modifiers(bpy.types.Panel):
+class JaspergeToolsPanel(bpy.types.Panel):
     bl_label = "jasperge tools"
     bl_idname = "VIEW3D_PT_jasperge_tools"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 
     def draw(self, context):
+
         layout = self.layout
         col = layout.column(align=True)
         col.label(text="File:")
         col.operator("file.incremental_save")
+        col.separator()
 
-        col = layout.column(align=True)
         col.label(text="Modifiers:")
-        col.operator("object.copy_modifier_settings", text="Cpy Settings")
+        col.operator("object.copy_modifier_settings", text="Copy Settings")
         row = col.row(align=True)
         row.operator("object.modifier_viewport_on", text="Viewport On")
         row.operator("object.modifier_viewport_off", text="Viewport Off")
+        col.separator()
 
-        col = layout.column(align=True)
         col.label(text="Object:")
         row = col.row(align=True)
         row.operator("object.wire_on")
