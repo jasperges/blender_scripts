@@ -16,6 +16,8 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+# <pep8 compliant>
+
 bl_info = {
     "name": "Objects exporter (obj)",
     "description": "Export all (selected objects) as obj's.",
@@ -43,52 +45,52 @@ def check_exporters():
     except:
         try:
             bpy.ops.wm.addon_enable(module="io_scene_obj")
-            print("*******\n.obj import enabled...\n*******")
+            print("*******\n.obj export enabled...\n*******")
         except:
             raise RuntimeError("Could not enable .obj export...")
 
 
 def export_object(**kwargs):
-    
+
     # Pull out the variables.
     ob = kwargs.setdefault("obj", bpy.context.active_object)
     objdir = kwargs.setdefault("objdir", bpy.path.abspath("//"))
     export_mats = kwargs.setdefault("export_mats", False)
     apply_modifiers = kwargs.setdefault("apply_modifiers", True)
-    
+
     # Select only this object.
     for obj in bpy.data.objects:
         obj.select = False
     ob.select = True
     bpy.context.scene.objects.active = ob
-    
+
     # Get the name of the object to use in the filename.
     name = bpy.path.clean_name(ob.name)
-    
+
     # Export obj.
     filepath = path.join(objdir, "%s.obj" % name)
     bpy.ops.export_scene.obj(
-        filepath=filepath,
-        check_existing=True,
-        use_selection=True,
-        use_animation=False,
-        use_mesh_modifiers=apply_modifiers,
-        use_edges=True,
-        use_normals=True,
-        use_uvs=True,
-        use_materials=export_mats,
-        use_triangles=False,
-        use_nurbs=False,
-        use_vertex_groups=False,
-        use_blen_objects=True,
-        group_by_object=False,
-        group_by_material=False,
-        keep_vertex_order=True,
-        global_scale=1,
-        axis_forward='-Z',
-        axis_up='Y',
-        path_mode='AUTO',
-        )
+            filepath=filepath,
+            check_existing=True,
+            use_selection=True,
+            use_animation=False,
+            use_mesh_modifiers=apply_modifiers,
+            use_edges=True,
+            use_normals=True,
+            use_uvs=True,
+            use_materials=export_mats,
+            use_triangles=False,
+            use_nurbs=False,
+            use_vertex_groups=False,
+            use_blen_objects=True,
+            group_by_object=False,
+            group_by_material=False,
+            keep_vertex_order=True,
+            global_scale=1,
+            axis_forward='-Z',
+            axis_up='Y',
+            path_mode='AUTO',
+            )
 
 
 class ExportObjs(Operator, ExportHelper):
@@ -97,13 +99,13 @@ class ExportObjs(Operator, ExportHelper):
     bl_idname = "export_scene.objdir"
     bl_label = "Export scene (OBJ)"
     bl_options = {'PRESET'}
-    
+
     filename_ext = ".obj"
     filter_glob = StringProperty(
         default="*.obj;*.mtl",
         options={'HIDDEN'},
         )
-    
+
     use_selection = BoolProperty(
         name="Selection Only",
         description="Export selected objects only",
@@ -119,47 +121,49 @@ class ExportObjs(Operator, ExportHelper):
         description="Also export the materials",
         default=False,
         )
-    
 
     def execute(self, context):
-        
+
         time1 = time()
         apply_modifiers = self.apply_modifiers
         export_mats = self.export_mats
-        
+
         # Check for needed exporters:
         check_exporters()
-        
+
         # Get a list with all the mesh objects.
         if self.use_selection:
             objects_to_export = [ob for ob in bpy.context.selected_objects]
         else:
-            objects_to_export = [ob for ob in bpy.data.objects]
-        
+            objects_to_export = [ob for ob in bpy.data.objects
+                    if ob.type in ('MESH', 'CURVE')]
+
         # Get the folder.
         dirpath = path.dirname(self.filepath)
-        
+
         for ob in objects_to_export:
             print("\n*** processing object %s (%d of %d)...\n" % (
                 ob.name,
                 objects_to_export.index(ob) + 1,
                 len(objects_to_export)),
                 )
-            
+
             export_object(
                 obj=ob,
                 objdir=dirpath,
                 apply_modifiers=apply_modifiers,
                 export_mats=export_mats,
                 )
-        
+
         process_time = time() - time1
         minutes, seconds = divmod(process_time, 60)
         if minutes == 1:
-            print("\n*** Objects export finished in %d minute and %d seconds...\n" % (int(minutes), int(seconds)))
+            print("\n*** Objects export finished in %d minute and %d seconds"\
+                    "...\n" % (int(minutes), int(seconds)))
         else:
-            print("\n*** Objects export finished in %d minutes and %d seconds...\n" % (int(minutes), int(seconds)))
-        
+            print("\n*** Objects export finished in %d minutes and %d seconds"\
+                    "...\n" % (int(minutes), int(seconds)))
+
         return {'FINISHED'}
 
 
@@ -169,15 +173,15 @@ def menu_func_export(self, context):
 
 def register():
     bpy.utils.register_module(__name__)
-    
+
     bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 
 def unregister():
     bpy.utils.unregister_module(__name__)
-    
+
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
-    
+
 
 if __name__ == "__main__":
     register()
