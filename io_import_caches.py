@@ -98,7 +98,8 @@ class ImportCaches(bpy.types.Operator, ImportHelper):
                             mc_mod.show_viewport = True             # Viewport visibility.
                             mc_mod.cache_format = ext.upper()[1:]   # The cache format.
                             mc_mod.filepath = f                     # The filepath.
-                            mc_mod.deform_mode = 'INTEGRATE'        # The deform mode.    
+                            mc_mod.deform_mode = 'INTEGRATE'        # The deform mode.
+                            mc_mod.frame_start = 1                  # The frame start.
                         else:
                             # Import the cache as shapekeys.
                             if mc_mod:

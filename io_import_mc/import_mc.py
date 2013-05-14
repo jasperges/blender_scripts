@@ -605,9 +605,4 @@ def load(operator, context, filepath, *args, **kwargs):
     bpy.context.scene.frame_end = mayacache.endframe
     bpy.context.scene.frame_current = mayacache.startframe
 
-#    if cache_info['cachetype'] == "OneFile":
-#        mc_filepath = "".join((base, ".mc"))
-#        if not os.path.isfile(mc_filepath):
-#            raise_cachefile_error(2, mc_filepath)
-
     return {'FINISHED'}
