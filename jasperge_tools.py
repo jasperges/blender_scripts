@@ -302,19 +302,23 @@ class JaspergeToolsMenu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator("file.incremental_save",
-                text="Incremental Save")
+                icon='SAVE_COPY')
         layout.separator()
-        layout.operator("object.copy_modifier_settings",
-                text="Copy Modifier Settings")
-        layout.operator("object.modifier_viewport_on",
-                text="Modifiers Viewport On")
-        layout.operator("object.modifier_viewport_off",
-                text="Modifiers Viewport Off")
+        layout.operator("object.copy_modifier_settings",)
+        layout.operator("object.modifier_viewport_on",)
+        layout.operator("object.modifier_viewport_off",)
         layout.separator()
         layout.operator("object.wire_on",
-                text="Wireframe Display On")
+                #text="Wireframe Display On",
+                icon='MESH_GRID')
         layout.operator("object.wire_off",
-                text="Wireframe Display Off")
+                #text="Wireframe Display Off",
+                icon='MESH_PLANE')
+        layout.separator()
+        layout.operator("object.shade_smooth",
+                icon='SOLID')
+        layout.operator("object.shade_flat",
+                icon='MESH_UVSPHERE')
 
 
 jasperge_tools_keymaps = list()
