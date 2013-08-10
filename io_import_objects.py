@@ -16,6 +16,9 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+# Todo:
+#   - disable operator if obj importer is not loaded
+
 bl_info = {
     "name": "Import object(s)",
     "author": "Jasper van Nieuwenhuizen",
@@ -61,8 +64,8 @@ class ImportObs(bpy.types.Operator, ImportHelper):
     filename_ext = ".obj"
     filter_glob = StringProperty(default="*.obj", options={'HIDDEN'})
     replace_existing = BoolProperty(
-            name="Overwrite existing objects",
-            description="Overwrite objects already present in the scene",
+            name="Replace existing objects",
+            description="Replace objects already present in the scene",
             default=True)
     material_options = EnumProperty(
             name="Materials",
@@ -100,12 +103,17 @@ class ImportObs(bpy.types.Operator, ImportHelper):
             # Import the objects and append them to "imported_list".
             imported_objects = []
             for f in import_files:
-                imported_objects.append(import_file(f))
+                obj = self.import_file(f)
+                if obj:
+                    imported_objects.append(obj)
+                    if self.material_options == 'ignore':
+                        self.remove_materials(obj)
             # Select all imported objects and make the last one the active object.
             # The obj importer already deselects previously selected objects.
-            for ob in imported_objects:
-                ob.select = True
-            context.scene.objects.active = imported_objects[-1]
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj_name in imported_objects:
+                bpy.context.scene.objects[obj_name].select = True
+            context.scene.objects.active = bpy.context.scene.objects[imported_objects[-1]]
 
         return {'FINISHED'}
 
@@ -114,6 +122,7 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         '''
         Imports an obj file and returns the name of the object
         '''
+
         try:
             bpy.ops.import_scene.obj(
                 filepath=f,
@@ -129,21 +138,64 @@ class ImportObs(bpy.types.Operator, ImportHelper):
                 axis_up='Y')
         except AttributeError:
             self.report({'ERROR'}, "obj importer not loaded, aborting...")
-            # raise Exception("obj importer not loaded, aborting...")
-            return {'CANCELLED'}
 
-        return rename_object(self, f)
+        return self.rename_object(f)
 
     def rename_object(self, f):
         '''
         Renames the object according to the file name and returns the name
         '''
-        name = path.splitext(path.split(f)[1])[0]
+        name = self.get_object_name(f)
         imported_object = bpy.context.selected_objects[0]
         if imported_object:
+            if name in bpy.context.scene.objects and self.replace_existing:
+                self.replace_object(self.get_object_name(f), imported_object)
             imported_object.name = imported_object.data.name = name
         else:
             print("File: {f} appears to be empty...".format(f=f))
+        
+        return name
+
+    def get_object_name(self, f):
+        '''
+        Determines the object name from the file name
+        '''
+        return path.splitext(path.split(f)[1])[0]
+
+    def replace_object(self, obj_name, obj_new):
+        '''
+        Replace existing object with new object and copy materials if wanted
+        '''
+        obj_old = bpy.context.scene.objects[obj_name]
+        if self.material_options == 'scene':
+            self.copy_materials(obj_new, obj_old)
+        bpy.context.scene.objects.unlink(obj_old)
+
+    def copy_materials(self, obj_copy_to, obj_copy_from):
+        '''
+        Copy materials from obj_copy_from to obj_copy_to
+        '''
+        bpy.ops.object.select_all(action='DESELECT')
+        obj_copy_to.select = obj_copy_from.select = True
+        bpy.context.scene.objects.active = obj_copy_from
+        bpy.ops.object.make_links_data(type='MATERIAL')
+        if len(obj_copy_to.data.polygons) > len(obj_copy_from.data.polygons):
+            obj_iter = obj_copy_from
+        else:
+            obj_iter = obj_copy_to
+        for p in obj_iter.data.polygons:
+            pi = p.index
+            mi = obj_copy_from.data.polygons[pi].material_index
+            obj_copy_to.data.polygons[pi].material_index = mi
+
+    def remove_materials(self, obj_name):
+        '''
+        Remove all materials from object with name obj_name
+        '''
+        obj = bpy.context.scene.objects[obj_name]
+        bpy.context.scene.objects.active = obj
+        for _ in obj.material_slots:
+            bpy.ops.object.material_slot_remove()
 
 
 def menu_func_import(self, context):
