@@ -47,14 +47,16 @@ class ImportObs(bpy.types.Operator, ImportHelper):
     bl_idname = "import_scene.obs"
     bl_label = "Import object(s)"
     bl_options = {'PRESET', 'UNDO'}
-    
+
     # List of operator properties, the attributes will be assigned
     # to the class instance from the operator settings before calling.
-    directory = StringProperty(maxlen=1024,
-        subtype='DIR_PATH',
-        options={'HIDDEN', 'SKIP_SAVE'})
-    files = CollectionProperty(type=bpy.types.OperatorFileListElement,
-        options={'HIDDEN', 'SKIP_SAVE'})
+    directory = StringProperty(
+            maxlen=1024,
+            subtype='DIR_PATH',
+            options={'HIDDEN', 'SKIP_SAVE'})
+    files = CollectionProperty(
+            type=bpy.types.OperatorFileListElement,
+            options={'HIDDEN', 'SKIP_SAVE'})
 
     filename_ext = ".obj"
     filter_glob = StringProperty(default="*.obj", options={'HIDDEN'})
@@ -84,7 +86,7 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         col.prop(self, "replace_existing")
         col.separator()
         col.prop(self, "material_options")
-    
+
     def execute(self, context):
         d = self.properties.directory
         fils = self.properties.files
@@ -124,11 +126,10 @@ class ImportObs(bpy.types.Operator, ImportHelper):
                 use_image_search=True,
                 global_clamp_size=0,
                 axis_forward='-Z',
-                axis_up='Y'
-                )
+                axis_up='Y')
         except AttributeError:
             self.report({'ERROR'}, "obj importer not loaded, aborting...")
-            #raise Exception("obj importer not loaded, aborting...")
+            # raise Exception("obj importer not loaded, aborting...")
             return {'CANCELLED'}
 
         return rename_object(self, f)
@@ -145,22 +146,19 @@ class ImportObs(bpy.types.Operator, ImportHelper):
             print("File: {f} appears to be empty...".format(f=f))
 
 
-
 def menu_func_import(self, context):
     self.layout.operator(ImportObs.bl_idname, text="Import object(s)")
 
 
 def register():
     bpy.utils.register_module(__name__)
-    
     bpy.types.INFO_MT_file_import.append(menu_func_import)
 
 
 def unregister():
     bpy.utils.unregister_module(__name__)
-    
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    
+
 
 if __name__ == "__main__":
     register()
