@@ -31,7 +31,10 @@ bl_info = {
 
 
 import bpy
-from bpy.props import StringProperty, CollectionProperty
+from bpy.props import (StringProperty,
+                       CollectionProperty,
+                       EnumProperty,
+                       BoolProperty)
 from bpy_extras.io_utils import ImportHelper
 from os import path
 from glob import glob
@@ -53,6 +56,32 @@ class ImportObs(bpy.types.Operator, ImportHelper):
 
     filename_ext = ".obj"
     filter_glob = StringProperty(default="*.obj", options={'HIDDEN'})
+    replace_existing = BoolProperty(
+            name="Overwrite existing objects",
+            description="Overwrite objects already present in the scene",
+            default=True)
+    material_options = EnumProperty(
+            name="Materials",
+            items=[("scene",
+                    "Scene",
+                    "Use the materials that are now assigned to the objects "\
+                    "(if they already exist), else don't assign materials"),
+                   ("obj",
+                    "From file",
+                    "Use the materials from the OBJ"),
+                   ("ignore",
+                    "No Materials",
+                    "Don't assign materials")],
+            description="Select which materials to use for the imported models",
+            default="scene")
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.separator()
+        col.prop(self, "replace_existing")
+        col.separator()
+        col.prop(self, "material_options")
     
     def execute(self, context):
         d = self.properties.directory
