@@ -39,8 +39,10 @@ from bpy_extras.io_utils import ImportHelper
 from os import path
 from glob import glob
 
+
 # Actual import operator.
 class ImportObs(bpy.types.Operator, ImportHelper):
+
     '''Import object(s)'''
     bl_idname = "import_scene.obs"
     bl_label = "Import object(s)"
@@ -96,30 +98,7 @@ class ImportObs(bpy.types.Operator, ImportHelper):
             # Import the objects and append them to "imported_list".
             imported_objects = []
             for f in import_files:
-                try:
-                    bpy.ops.import_scene.obj(
-                        filepath=f,
-                        use_ngons=True,
-                        use_edges=True,
-                        use_smooth_groups=True,
-                        use_split_objects=False,
-                        use_split_groups=False,
-                        use_groups_as_vgroups=False,
-                        use_image_search=True,
-                        global_clamp_size=0,
-                        axis_forward='-Z',
-                        axis_up='Y'
-                        )
-                except AttributeError:
-                    raise Exception("obj importer not loaded, aborting...")
-                # Rename the object.
-                name = path.splitext(path.split(f)[1])[0]
-                imported_object = bpy.context.selected_objects[0]
-                if imported_object:
-                    imported_object.name = imported_object.data.name = name
-                    imported_objects.append(imported_object)
-                else:
-                    print("File: {0} appears to be empty...".format(f))
+                imported_objects.append(import_file(f))
             # Select all imported objects and make the last one the active object.
             # The obj importer already deselects previously selected objects.
             for ob in imported_objects:
@@ -127,6 +106,44 @@ class ImportObs(bpy.types.Operator, ImportHelper):
             context.scene.objects.active = imported_objects[-1]
 
         return {'FINISHED'}
+
+    # Helper functions
+    def import_file(self, f):
+        '''
+        Imports an obj file and returns the name of the object
+        '''
+        try:
+            bpy.ops.import_scene.obj(
+                filepath=f,
+                use_ngons=True,
+                use_edges=True,
+                use_smooth_groups=True,
+                use_split_objects=False,
+                use_split_groups=False,
+                use_groups_as_vgroups=False,
+                use_image_search=True,
+                global_clamp_size=0,
+                axis_forward='-Z',
+                axis_up='Y'
+                )
+        except AttributeError:
+            self.report({'ERROR'}, "obj importer not loaded, aborting...")
+            #raise Exception("obj importer not loaded, aborting...")
+            return {'CANCELLED'}
+
+        return rename_object(self, f)
+
+    def rename_object(self, f):
+        '''
+        Renames the object according to the file name and returns the name
+        '''
+        name = path.splitext(path.split(f)[1])[0]
+        imported_object = bpy.context.selected_objects[0]
+        if imported_object:
+            imported_object.name = imported_object.data.name = name
+        else:
+            print("File: {f} appears to be empty...".format(f=f))
+
 
 
 def menu_func_import(self, context):
