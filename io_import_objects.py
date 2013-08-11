@@ -64,8 +64,20 @@ class ImportObs(bpy.types.Operator, ImportHelper):
     filename_ext = ".obj"
     filter_glob = StringProperty(default="*.obj", options={'HIDDEN'})
     replace_existing = BoolProperty(
-            name="Replace existing objects",
+            name="Replace objects",
             description="Replace objects already present in the scene",
+            default=True)
+    copy_location = BoolProperty(
+            name="Location",
+            description="Copy the location from the old to the new object",
+            default=True)
+    copy_rotation = BoolProperty(
+            name="Rotation",
+            description="Copy the rotation from the old to the new object",
+            default=True)
+    copy_scale = BoolProperty(
+            name="Scale",
+            description="Copy the scale from the old to the new object",
             default=True)
     material_options = EnumProperty(
             name="Materials",
@@ -80,15 +92,29 @@ class ImportObs(bpy.types.Operator, ImportHelper):
                     "No Materials",
                     "Don't assign materials")],
             description="Select which materials to use for the imported models",
-            default="scene")
+            default='scene')
+
+    @classmethod
+    def poll(cls, context):
+        '''
+        !!!
+        Return True if obj importer is enabled
+        '''
+        return True
 
     def draw(self, context):
         layout = self.layout
         col = layout.column()
         col.separator()
         col.prop(self, "replace_existing")
-        col.separator()
-        col.prop(self, "material_options")
+        if self.replace_existing:
+            col.label("Copy Transforms")
+            row = col.row(align=True)
+            row.prop(self, "copy_location", toggle=True)
+            row.prop(self, "copy_rotation", toggle=True)
+            row.prop(self, "copy_scale", toggle=True)
+        col.label("Materials")
+        col.row().prop(self, "material_options", expand=True)
 
     def execute(self, context):
         d = self.properties.directory
@@ -148,6 +174,7 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         name = self.get_object_name(f)
         imported_object = bpy.context.selected_objects[0]
         if imported_object:
+            self.apply_rotation(imported_object)
             if name in bpy.context.scene.objects and self.replace_existing:
                 self.replace_object(self.get_object_name(f), imported_object)
             imported_object.name = imported_object.data.name = name
@@ -169,6 +196,12 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         obj_old = bpy.context.scene.objects[obj_name]
         if self.material_options == 'scene':
             self.copy_materials(obj_new, obj_old)
+        if self.copy_location:
+            self.copy_transforms(obj_new, obj_old, 'location')
+        if self.copy_rotation:
+            self.copy_transforms(obj_new, obj_old, 'rotation')
+        if self.copy_scale:
+            self.copy_transforms(obj_new, obj_old, 'scale')
         bpy.context.scene.objects.unlink(obj_old)
 
     def copy_materials(self, obj_copy_to, obj_copy_from):
@@ -196,6 +229,33 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         bpy.context.scene.objects.active = obj
         for _ in obj.material_slots:
             bpy.ops.object.material_slot_remove()
+
+    def copy_transforms(self, obj_new, obj_old, transform):
+        '''
+        Copy the given transformation from the old to the new object
+        '''
+        if transform == 'location':
+            obj_new.location = obj_old.location
+        if transform == 'rotation':
+            obj_new.rotation_mode = obj_old.rotation_mode
+            if obj_old.rotation_mode == 'AXIS_ANGLE':
+                obj_new.rotation_axis_angle[0] = obj_old.rotation_axis_angle[0]
+                obj_new.rotation_axis_angle[1] = obj_old.rotation_axis_angle[1]
+                obj_new.rotation_axis_angle[2] = obj_old.rotation_axis_angle[2]
+                obj_new.rotation_axis_angle[3] = obj_old.rotation_axis_angle[3]
+            if obj_old.rotation_mode == 'QUATERNION':
+                obj_new.rotation_quaternion = obj_old.rotation_quaternion
+            else:
+                obj_new.rotation_euler = obj_old.rotation_euler
+        if transform == 'scale':
+            obj_new.scale = obj_old.scale
+
+    def apply_rotation(self, obj):
+        '''
+        Apply the object's rotation to its data
+        '''
+        bpy.context.scene.objects.active = obj
+        bpy.ops.object.transform_apply(rotation=True)
 
 
 def menu_func_import(self, context):
