@@ -80,7 +80,7 @@ class ImportObs(bpy.types.Operator, ImportHelper):
             name="Scale",
             description="Copy the scale from the old to the new object",
             default=True)
-    copy_modifiers = BoolProperty(
+    copy_modifiers_options = BoolProperty(
             name="Preserve modifiers",
             description="Copy the modifiers from the replaced object to the "\
                         "newly imported one",
@@ -123,7 +123,7 @@ class ImportObs(bpy.types.Operator, ImportHelper):
             row.prop(self, "copy_scale", toggle=True)
             subcol.separator()
             subcol.label("Preserve modifiers")
-            subcol.prop(self, "copy_modifiers", text="All", toggle=True)
+            subcol.prop(self, "copy_modifiers_options", text="All", toggle=True)
         col.separator()
         col.label("Materials")
         col.row().prop(self, "material_options", expand=True)
@@ -187,13 +187,22 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         imported_object = bpy.context.selected_objects[0]
         if imported_object:
             self.apply_rotation(imported_object)
-            if name in bpy.context.scene.objects and self.replace_existing:
+            if self.is_replace_object(name, imported_object):
                 self.replace_object(self.get_object_name(f), imported_object)
             imported_object.name = imported_object.data.name = name
         else:
             print("File: {f} appears to be empty...".format(f=f))
         
         return name
+
+    def is_replace_object(self, name, imported_object):
+        '''
+        Returns True if the imported object replaces an already existing one
+        '''
+        if name in bpy.context.scene.objects and self.replace_existing:
+            if bpy.context.scene.objects[name] != imported_object:
+                return True
+        return False
 
     def get_object_name(self, f):
         '''
@@ -214,6 +223,8 @@ class ImportObs(bpy.types.Operator, ImportHelper):
             self.copy_transforms(obj_new, obj_old, 'rotation')
         if self.copy_scale:
             self.copy_transforms(obj_new, obj_old, 'scale')
+        if self.copy_modifiers_options:
+            self.copy_modifiers(obj_new, obj_old)
         bpy.context.scene.objects.unlink(obj_old)
 
     def copy_materials(self, obj_copy_to, obj_copy_from):
@@ -261,6 +272,17 @@ class ImportObs(bpy.types.Operator, ImportHelper):
                 obj_new.rotation_euler = obj_old.rotation_euler
         if transform == 'scale':
             obj_new.scale = obj_old.scale
+
+    def copy_modifiers(self, obj_new, obj_old, modifiers='all'):
+        '''
+        Copy the specified modifiers from obj_old to obj_new
+        '''
+        print("\n*** Copying modifiers...\n")
+        bpy.ops.object.select_all(action='DESELECT')
+        obj_new.select = obj_old.select = True
+        bpy.context.scene.objects.active = obj_old
+        if modifiers == 'all':
+            bpy.ops.object.make_links_data(type='MODIFIERS')
 
     def apply_rotation(self, obj):
         '''
