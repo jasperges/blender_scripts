@@ -18,6 +18,7 @@
 
 # Todo:
 #   - disable operator if obj importer is not loaded
+#   - only preserve selected modifiers
 
 bl_info = {
     "name": "Import object(s)",
@@ -79,6 +80,11 @@ class ImportObs(bpy.types.Operator, ImportHelper):
             name="Scale",
             description="Copy the scale from the old to the new object",
             default=True)
+    copy_modifiers = BoolProperty(
+            name="Preserve modifiers",
+            description="Copy the modifiers from the replaced object to the "\
+                        "newly imported one",
+            default=True)
     material_options = EnumProperty(
             name="Materials",
             items=[("scene",
@@ -108,11 +114,17 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         col.separator()
         col.prop(self, "replace_existing")
         if self.replace_existing:
-            col.label("Copy Transforms")
-            row = col.row(align=True)
+            box = col.box()
+            subcol = box.column()
+            subcol.label("Preserve transforms")
+            row = subcol.row(align=True)
             row.prop(self, "copy_location", toggle=True)
             row.prop(self, "copy_rotation", toggle=True)
             row.prop(self, "copy_scale", toggle=True)
+            subcol.separator()
+            subcol.label("Preserve modifiers")
+            subcol.prop(self, "copy_modifiers", text="All", toggle=True)
+        col.separator()
         col.label("Materials")
         col.row().prop(self, "material_options", expand=True)
 
