@@ -186,7 +186,7 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         name = self.get_object_name(f)
         imported_object = bpy.context.selected_objects[0]
         if imported_object:
-            self.apply_rotation(imported_object)
+            #self.apply_rotation(imported_object)
             if self.is_replace_object(name, imported_object):
                 self.replace_object(self.get_object_name(f), imported_object)
             imported_object.name = imported_object.data.name = name
@@ -284,7 +284,7 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         if modifiers == 'all':
             bpy.ops.object.make_links_data(type='MODIFIERS')
 
-    def apply_rotation(self, obj):
+    #def apply_rotation(self, obj):
         '''
         Apply the object's rotation to its data
         '''
