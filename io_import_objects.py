@@ -42,6 +42,7 @@ from bpy.props import (StringProperty,
 from bpy_extras.io_utils import ImportHelper
 from os import path
 from glob import glob
+import time
 
 
 # Actual import operator.
@@ -99,6 +100,10 @@ class ImportObs(bpy.types.Operator, ImportHelper):
                     "Don't assign materials")],
             description="Select which materials to use for the imported models",
             default='scene')
+    is_apply_rotation = BoolProperty(
+            name="Apply rotation",
+            description="Apply rotation after import",
+            default=False)
 
     @classmethod
     def poll(cls, context):
@@ -112,6 +117,7 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         layout = self.layout
         col = layout.column()
         col.separator()
+        col.prop(self, "is_apply_rotation")
         col.prop(self, "replace_existing")
         if self.replace_existing:
             box = col.box()
@@ -129,6 +135,8 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         col.row().prop(self, "material_options", expand=True)
 
     def execute(self, context):
+        start_time = time.time()
+        print()
         d = self.properties.directory
         fils = self.properties.files
         if not fils[0].name:
@@ -140,18 +148,21 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         if import_files:
             # Import the objects and append them to "imported_list".
             imported_objects = []
-            for f in import_files:
+            for progress, f in enumerate(import_files):
                 obj = self.import_file(f)
                 if obj:
                     imported_objects.append(obj)
                     if self.material_options == 'ignore':
                         self.remove_materials(obj)
+                self.print_progress(progress, maximum=len(import_files) - 1)
             # Select all imported objects and make the last one the active object.
             # The obj importer already deselects previously selected objects.
             bpy.ops.object.select_all(action='DESELECT')
             for obj_name in imported_objects:
                 bpy.context.scene.objects[obj_name].select = True
             context.scene.objects.active = bpy.context.scene.objects[imported_objects[-1]]
+
+        print("\nFiles imported in {s:.2f} seconds".format(s=time.time() - start_time))
 
         return {'FINISHED'}
 
@@ -186,7 +197,8 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         name = self.get_object_name(f)
         imported_object = bpy.context.selected_objects[0]
         if imported_object:
-            #self.apply_rotation(imported_object)
+            if self.is_apply_rotation:
+                self.apply_rotation(imported_object)
             if self.is_replace_object(name, imported_object):
                 self.replace_object(self.get_object_name(f), imported_object)
             imported_object.name = imported_object.data.name = name
@@ -277,19 +289,28 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         '''
         Copy the specified modifiers from obj_old to obj_new
         '''
-        print("\n*** Copying modifiers...\n")
+        print("*** Copying modifiers to {obj_new}...".format(obj_new=obj_new))
         bpy.ops.object.select_all(action='DESELECT')
         obj_new.select = obj_old.select = True
         bpy.context.scene.objects.active = obj_old
         if modifiers == 'all':
             bpy.ops.object.make_links_data(type='MODIFIERS')
 
-    #def apply_rotation(self, obj):
+    def apply_rotation(self, obj):
         '''
         Apply the object's rotation to its data
         '''
         bpy.context.scene.objects.active = obj
         bpy.ops.object.transform_apply(rotation=True)
+
+    def print_progress(self, progress, minimum=0, maximum=100, barlen=50):
+        if maximum <= minimum:
+            return
+        total_len = maximum - minimum
+        bar_progress = int((progress - minimum) * barlen / total_len) * "="
+        bar_empty = (barlen - int((progress - minimum) * barlen / total_len)) * " "
+        percentage = "".join((str(int((progress - minimum) / total_len * 100)), "%"))
+        print("".join(("[", bar_progress, bar_empty, "]", " ", percentage)), end="\r")
 
 
 def menu_func_import(self, context):
