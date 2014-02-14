@@ -16,6 +16,7 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+
 bl_info = {
     "name": "Import cache(s)",
     "author": "Jasper van Nieuwenhuizen",
@@ -31,7 +32,7 @@ bl_info = {
 
 
 import bpy
-from bpy.props import StringProperty, EnumProperty, CollectionProperty
+from bpy.props import StringProperty, EnumProperty, CollectionProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 from os import path
 from glob import glob
@@ -53,6 +54,11 @@ class ImportCaches(bpy.types.Operator, ImportHelper):
 
     filename_ext = ".pc2;.mdd"
     filter_glob = StringProperty(default="*.pc2;*.mdd", options={'HIDDEN'})
+
+    use_relative_path = BoolProperty(
+        name='Relative Path',
+        description='Select the file relative to the blend file',
+        default=True)
 
     cache_method = EnumProperty(
         name="",
@@ -76,9 +82,10 @@ class ImportCaches(bpy.types.Operator, ImportHelper):
         if import_files:
             # Import the caches and append the objects to "cache_objects".
             cache_objects = []
-            for f in import_files:
+            for i, f in enumerate(import_files):
                 # Determine the name of the object from the filename.
                 name, ext = path.splitext(path.split(f)[1])
+                print("Importing {ob} ({num} of {total})...".format(ob=name, num=i+1, total=len(import_files)))
                 for ob in bpy.data.objects:
                     if ob.name == name:
                         # Found the object, make it the active scene object.
@@ -93,6 +100,12 @@ class ImportCaches(bpy.types.Operator, ImportHelper):
                             # Import the cache with the 'Mesh Cache Modifier'.
                             if not mc_mod:
                                 mc_mod = ob.modifiers.new(name="Mesh Cache", type='MESH_CACHE')
+                                # Dirty hack to move the mesh cache modifier to the top of the stack
+                                for i in range(len(ob.modifiers)-1):
+                                    bpy.ops.object.modifier_move_up(modifier=mc_mod.name)
+                            # Determine to use relative path or not.
+                            if context.blend_data.filepath and self.use_relative_path:
+                                f = bpy.path.relpath(f)
                             # Set the properties of the Mesh Cache modifier.
                             mc_mod.show_render = True               # Render visibility.
                             mc_mod.show_viewport = True             # Viewport visibility.
@@ -133,6 +146,9 @@ class ImportCaches(bpy.types.Operator, ImportHelper):
         col.separator()
         col.label(text="Cache Import Method:")
         col.prop(self, "cache_method")
+        if self.cache_method == 'mod':
+            col.separator()
+            col.prop(self, "use_relative_path")
 
 
 def menu_func_import(self, context):
