@@ -187,26 +187,27 @@ def select_point(self, context, curve_obj=None):
     select_point_handles(point_to_select, type)
 
 
-class VIEW3D_PT_curve_point_select(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_category = "Tools"
-    bl_label = 'Curve select'
+# class VIEW3D_PT_curve_point_select(bpy.types.Panel):
+#     bl_space_type = 'VIEW_3D'
+#     bl_region_type = 'TOOLS'
+#     bl_category = "Tools"
+#     bl_label = 'Curve select'
 
-    # Poll
-    @classmethod
-    def poll(self, context):
-        if context.object and context.object.type == 'CURVE' and context.object.mode == 'EDIT':
-            return context.object.type
+#     # Poll
+#     @classmethod
+#     def poll(self, context):
+#         if context.object and context.object.type == 'CURVE' and context.object.mode == 'EDIT':
+#             return context.object.type
 
-    # Draw
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column(align=True)
-        col.operator('curve.select_point', text='Select previous').action = 'PREVIOUS'
-        col.operator('curve.select_point', text='Select next').action = 'NEXT'
-        col.operator('curve.select_point', text='Select first').action = 'FIRST'
-        col.operator('curve.select_point', text='Select last').action = 'LAST'
+#     # Draw
+#     def draw(self, context):
+#         layout = self.layout
+#         col = layout.column(align=True)
+#         col.label(text="Selection")
+#         col.operator('curve.select_point', text='Select previous').action = 'PREVIOUS'
+#         col.operator('curve.select_point', text='Select next').action = 'NEXT'
+#         col.operator('curve.select_point', text='Select first').action = 'FIRST'
+#         col.operator('curve.select_point', text='Select last').action = 'LAST'
 
 
 class CURVE_OT_select_point(bpy.types.Operator):
@@ -244,12 +245,23 @@ class CURVE_OT_select_point(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def draw_func(self, context):
+        layout = self.layout
+        col = layout.column(align=True)
+        col.label(text="Selection:")
+        col.operator('curve.select_point', text='Select previous').action = 'PREVIOUS'
+        col.operator('curve.select_point', text='Select next').action = 'NEXT'
+        col.operator('curve.select_point', text='Select first').action = 'FIRST'
+        col.operator('curve.select_point', text='Select last').action = 'LAST'
+
+
 def menu_func(self, context):
     layout = self.layout
-    layout.operator('curve.select_point', text='Select previous').action = 'PREVIOUS'
-    layout.operator('curve.select_point', text='Select next').action = 'NEXT'
-    layout.operator('curve.select_point', text='Select first').action = 'FIRST'
+    layout.separator()
     layout.operator('curve.select_point', text='Select last').action = 'LAST'
+    layout.operator('curve.select_point', text='Select first').action = 'FIRST'
+    layout.operator('curve.select_point', text='Select next').action = 'NEXT'
+    layout.operator('curve.select_point', text='Select previous').action = 'PREVIOUS'
 
 
 # store keymaps here to access after registration
@@ -258,12 +270,12 @@ addon_keymaps = []
 
 def register():
     bpy.utils.register_module(__name__)
+    bpy.types.VIEW3D_PT_tools_curveedit.append(draw_func)
     bpy.types.VIEW3D_MT_select_edit_curve.append(menu_func)
 
     # handle the keymap
     wm = bpy.context.window_manager
-    # km = wm.keyconfigs.addon.keymaps.new(name='Curve', space_type='VIEW_3D')
-    km = wm.keyconfigs.addon.keymaps.new(name="Curve")
+    km = wm.keyconfigs.addon.keymaps.new("Curve")
 
     km_prev = km.keymap_items.new(
         'curve.select_point',
@@ -283,7 +295,8 @@ def register():
         'curve.select_point',
         'LEFT_BRACKET',
         'PRESS',
-        shift=True
+        shift=True,
+        ctrl=True
         )
     km_first.properties.action = 'FIRST'
 
@@ -291,18 +304,37 @@ def register():
         'curve.select_point',
         'RIGHT_BRACKET',
         'PRESS',
-        shift=True
+        shift=True,
+        ctrl=True
         )
     km_last.properties.action = 'LAST'
+
+    # Also add shortcuts for adding the next/previous point to the selection.
+    km_add_previous = km.keymap_items.new(
+        'curve.select_previous',
+        'LEFT_BRACKET',
+        'PRESS',
+        shift=True
+        )
+
+    km_add_next = km.keymap_items.new(
+        'curve.select_next',
+        'RIGHT_BRACKET',
+        'PRESS',
+        shift=True
+        )
 
     addon_keymaps.append((km, km_prev))
     addon_keymaps.append((km, km_next))
     addon_keymaps.append((km, km_first))
     addon_keymaps.append((km, km_last))
+    addon_keymaps.append((km, km_add_previous))
+    addon_keymaps.append((km, km_add_next))
 
 
 def unregister():
     bpy.utils.unregister_module(__name__)
+    bpy.types.VIEW3D_PT_tools_curveedit.remove(draw_func)
     bpy.types.VIEW3D_MT_select_edit_curve.remove(menu_func)
 
     # handle the keymap
