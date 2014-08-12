@@ -272,6 +272,7 @@ class JaspergeToolsPanel(bpy.types.Panel):
     bl_idname = "VIEW3D_PT_jasperge_tools"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
+    bl_category = 'Tools'
 
     def draw(self, context):
 
