@@ -32,8 +32,10 @@ bl_info = {
     "category": "3D View"}
 
 import bpy
+from bpy.props import StringProperty, IntProperty
 import os
 import glob
+import re
 
 
 class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
@@ -41,7 +43,7 @@ class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
     """all other selected objects."""
 
     bl_description = "Copy settings of modifiers from active object to all"\
-            " other selected objects."
+        " other selected objects."
     bl_idname = "object.copy_modifier_settings"
     bl_label = "Copy Modifier Settings"
     bl_space_type = 'VIEW_3D'
@@ -101,7 +103,8 @@ class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
                                     break
 
                             # create new fcurve
-                            fcu2 = action2.fcurves.new(data_path=fcu.data_path,
+                            fcu2 = action2.fcurves.new(
+                                data_path=fcu.data_path,
                                 index=fcu.array_index)
                             fcu2.color = fcu.color
 
@@ -127,7 +130,7 @@ class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
      'SIMPLE_DEFORM) in the viewport."""
 
     bl_description = "Turn off all the modifiers (except 'ARMATURE', 'CURVE'"\
-            "and 'SIMPLE_DEFORM) in the viewport."
+        "and 'SIMPLE_DEFORM) in the viewport."
     bl_idname = "object.modifier_viewport_off"
     bl_label = "Modifiers viewport off"
     bl_space_type = 'VIEW_3D'
@@ -242,7 +245,7 @@ class FILE_incremental_save(bpy.types.Operator):
         if incr_files:
             incr_files.sort()   # Sort list, just to be sure.
             last_file_num = int(os.path.splitext(
-                    incr_files[-1])[0].split(".")[-1])
+                incr_files[-1])[0].split(".")[-1])
             file_num = last_file_num + 1
         else:
             file_num = 0
@@ -267,6 +270,82 @@ class FILE_incremental_save(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class OBJECT_OT_hash_rename(bpy.types.Operator):
+    """Hash rename all selected objects."""
+
+    bl_description = "Hash rename all selected objects."
+    bl_idname = "object.hash_rename"
+    bl_label = "Hash rename"
+    bl_space_type = 'VIEW_3D'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+
+    new_name = StringProperty(
+        name="New name",
+        description="The new name for the objects. Use #-es to insert "
+                    "numbering. The amount of #-es determines the padding.",
+        default="")
+
+    start_number = IntProperty(
+        name="Start",
+        description="Start the numbering with this number.",
+        default=1,
+        min=0)
+
+    def parse_new_name(self, new_name):
+        """
+        parse_new_name(string new_name) -> string new_name
+
+            Parses the new_name string and return a string that can directly be
+            used in the renaming process.
+
+            string new_name - the new name to use for the objects
+        """
+
+        m = re.search(r"#+", new_name)
+        if not m:
+            return new_name
+        else:
+            replace_string = "".join(("{i:0", str(len(m.group())), "d}"))
+            new_name = "".join((new_name[:m.start()],
+                                replace_string,
+                                new_name[m.end():]))
+            new_name = self.parse_new_name(new_name)
+            return new_name
+
+    def execute(self, context):
+        wm = bpy.context.window_manager
+        self.new_name = wm.jasperge_tools_settings.new_name
+        self.start_number = wm.jasperge_tools_settings.start_number
+        new_name = self.parse_new_name(self.new_name)
+        for i, obj in enumerate(context.selected_objects):
+            obj.name = new_name.format(i=i + self.start_number)
+
+        return {'FINISHED'}
+
+    # def invoke(self, context, event):
+    #     wm = context.window_manager
+
+    #     return wm.invoke_props_popup(self, event)
+
+
+class JaspergeToolsSettings(bpy.types.PropertyGroup):
+    new_name = StringProperty(
+        name="New name",
+        description="The new name for the objects. Use #-es to insert "
+                    "numbering. The amount of #-es determines the padding.",
+        default="")
+
+    start_number = IntProperty(
+        name="Start",
+        description="Start the numbering with this number.",
+        default=1,
+        min=0)
+
+
 class JaspergeToolsPanel(bpy.types.Panel):
     bl_label = "jasperge tools"
     bl_idname = "VIEW3D_PT_jasperge_tools"
@@ -277,6 +356,8 @@ class JaspergeToolsPanel(bpy.types.Panel):
     def draw(self, context):
 
         layout = self.layout
+        wm = bpy.context.window_manager
+
         col = layout.column(align=True)
         col.label(text="File:")
         col.operator("file.incremental_save")
@@ -293,6 +374,13 @@ class JaspergeToolsPanel(bpy.types.Panel):
         row = col.row(align=True)
         row.operator("object.wire_on")
         row.operator("object.wire_off")
+        col.separator()
+
+        col.label(text="Rename:")
+        # row = col.row(align=True)
+        col.prop(wm.jasperge_tools_settings, "new_name")
+        col.prop(wm.jasperge_tools_settings, "start_number")
+        col.operator("object.hash_rename", "Rename")
 
 
 class JaspergeToolsMenu(bpy.types.Menu):
@@ -303,23 +391,26 @@ class JaspergeToolsMenu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator("file.incremental_save",
-                icon='SAVE_COPY')
+                        icon='SAVE_COPY')
         layout.separator()
         layout.operator("object.copy_modifier_settings",)
         layout.operator("object.modifier_viewport_on",)
         layout.operator("object.modifier_viewport_off",)
         layout.separator()
         layout.operator("object.wire_on",
-                #text="Wireframe Display On",
-                icon='MESH_GRID')
+                        #text="Wireframe Display On",
+                        icon='MESH_GRID')
         layout.operator("object.wire_off",
-                #text="Wireframe Display Off",
-                icon='MESH_PLANE')
+                        #text="Wireframe Display Off",
+                        icon='MESH_PLANE')
         layout.separator()
         layout.operator("object.shade_smooth",
-                icon='SOLID')
+                        icon='SOLID')
         layout.operator("object.shade_flat",
-                icon='MESH_UVSPHERE')
+                        icon='MESH_UVSPHERE')
+        layout.separator()
+        # layout.operator_context = 'INVOKE_DEFAULT'
+        layout.operator("object.hash_rename", "Rename")
 
 
 jasperge_tools_keymaps = list()
@@ -327,6 +418,7 @@ jasperge_tools_keymaps = list()
 
 def register():
     bpy.utils.register_module(__name__)
+    bpy.types.WindowManager.jasperge_tools_settings = bpy.props.PointerProperty(type=JaspergeToolsSettings)
     wm = bpy.context.window_manager
     for mode in (
             "Object Mode",
@@ -352,6 +444,7 @@ def unregister():
     for km in jasperge_tools_keymaps:
         wm.keyconfigs.addon.keymaps.remove(km)
     del jasperge_tools_keymaps[:]
+    del bpy.types.WindowManager.jasperge_tools_settings
 
 
 if __name__ == "__main__":
