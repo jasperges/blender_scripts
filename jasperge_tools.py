@@ -20,6 +20,14 @@
 
 # The 'copy modifier settings' is from an addon by Sergey Sharybin.
 
+# TODO: - Expand load_post handler to try to get the version number and padding
+#         from the filename
+#       - unregister load_post handler
+#       - Properly add rename to menu (immediately presenting options)
+#       - Properly add update version to menu (immediately presenting options)
+#       - Add confirmation to overwrite file if file already exists for version update.
+
+
 bl_info = {
     "name": "jasperge tools",
     "description": "Assorted tools",
@@ -31,11 +39,12 @@ bl_info = {
     "tracker_url": "",
     "category": "3D View"}
 
-import bpy
-from bpy.props import StringProperty, IntProperty
 import os
 import glob
 import re
+import bpy
+from bpy.app.handlers import persistent
+from bpy.props import StringProperty, IntProperty
 
 
 class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
@@ -270,6 +279,64 @@ class FILE_incremental_save(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class FILE_update_version(bpy.types.Operator):
+    """Update the version of the filename and the render path.
+
+    E.g.: filename: my_blend_file_v010.blend -> my_blend_file_v011.blend
+          render output: //render/v010/xxx -> //render/v011/xxx"""
+
+    bl_description = "Update the version of the filename and the render path."
+    bl_idname = "file.update_version"
+    bl_label = "Update version"
+
+    version = IntProperty(
+        name="Version",
+        description="The new version number for the file",
+        default=1,
+        min=1)
+
+    padding = IntProperty(
+        name="Padding",
+        description="The padding of the version number",
+        default=2,
+        min=1)
+
+    def version_to_string(self, version, padding):
+        return "v{v:0{p}d}".format(v=version, p=padding)
+
+    def update_filename(self):
+        version = self.version
+        padding = self.padding
+        blend_path = bpy.data.filepath
+        blend_dir = os.path.dirname(blend_path)
+        blend_file = os.path.basename(blend_path)
+        version_str = self.version_to_string(version, padding)
+        new_blend_file = version_str.join(re.split(r"v\d+", blend_file))
+        new_blend_path = os.path.join(blend_dir, new_blend_file)
+        bpy.ops.wm.save_as_mainfile(filepath=new_blend_path, compress=True)
+
+    def update_renderpath(self):
+        version = self.version
+        padding = self.padding
+        render_path = bpy.context.scene.render.filepath
+        version_str = self.version_to_string(version, padding)
+        new_render_path = version_str.join(re.split(r"v\d+", render_path))
+        bpy.context.scene.render.filepath = new_render_path
+
+    def execute(self, context):
+        wm = bpy.context.window_manager
+        self.version = wm.jasperge_tools_settings.version
+        self.padding = wm.jasperge_tools_settings.padding
+        self.update_filename()
+        self.update_renderpath()
+
+        # Add version number and padding to first scene in file
+        bpy.data.scenes[0]["jasperge_tools_file_version"] = self.version
+        bpy.data.scenes[0]["jasperge_tools_file_version_padding"] = self.padding
+
+        return {'FINISHED'}
+
+
 class OBJECT_OT_hash_rename(bpy.types.Operator):
     """Hash rename all selected objects."""
 
@@ -345,6 +412,18 @@ class JaspergeToolsSettings(bpy.types.PropertyGroup):
         default=1,
         min=0)
 
+    version = IntProperty(
+        name="Version",
+        description="The new version number for the file",
+        default=1,
+        min=1)
+
+    padding = IntProperty(
+        name="Padding",
+        description="The padding of the version number",
+        default=2,
+        min=1)
+
 
 class JaspergeToolsPanel(bpy.types.Panel):
     bl_label = "jasperge tools"
@@ -358,9 +437,14 @@ class JaspergeToolsPanel(bpy.types.Panel):
         layout = self.layout
         wm = bpy.context.window_manager
 
-        col = layout.column(align=True)
+        col = layout.column(align=False)
         col.label(text="File:")
         col.operator("file.incremental_save")
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(wm.jasperge_tools_settings, "version")
+        row.prop(wm.jasperge_tools_settings, "padding")
+        col.operator("file.update_version")
         col.separator()
 
         col.label(text="Modifiers:")
@@ -392,6 +476,7 @@ class JaspergeToolsMenu(bpy.types.Menu):
         layout = self.layout
         layout.operator("file.incremental_save",
                         icon='SAVE_COPY')
+        # layout.operator("file.update_version")
         layout.separator()
         layout.operator("object.copy_modifier_settings",)
         layout.operator("object.modifier_viewport_on",)
@@ -413,6 +498,16 @@ class JaspergeToolsMenu(bpy.types.Menu):
         layout.operator("object.hash_rename", "Rename")
 
 
+@persistent
+def update_jasperge_settings(context):
+    wm = bpy.context.window_manager
+    jt_settings = wm.jasperge_tools_settings
+    jt_settings.version = bpy.data.scenes[0].get(
+        "jasperge_tools_file_version", 1)
+    jt_settings.padding = bpy.data.scenes[0].get(
+        "jasperge_tools_file_version_padding", 2)
+
+
 jasperge_tools_keymaps = list()
 
 
@@ -420,22 +515,22 @@ def register():
     bpy.utils.register_module(__name__)
     bpy.types.WindowManager.jasperge_tools_settings = bpy.props.PointerProperty(type=JaspergeToolsSettings)
     wm = bpy.context.window_manager
-    for mode in (
-            "Object Mode",
-            "Mesh",
-            "Curve",
-            "Armature",
-            "Metaball",
-            "Lattice",
-            "Font",
-            "Pose",
-            "Vertex Paint",
-            "Weight Paint",
-            "Sculpt",
-            ):
+    for mode in ("Object Mode",
+                 "Mesh",
+                 "Curve",
+                 "Armature",
+                 "Metaball",
+                 "Lattice",
+                 "Font",
+                 "Pose",
+                 "Vertex Paint",
+                 "Weight Paint",
+                 "Sculpt",
+                 ):
         km = wm.keyconfigs.addon.keymaps.new(name=mode)
         kmi = km.keymap_items.new("wm.call_menu", "Q", "PRESS", shift=True)
         kmi.properties.name = "VIEW3D_MT_jasperge_tools_menu"
+    bpy.app.handlers.load_post.append(update_jasperge_settings)
 
 
 def unregister():
@@ -445,6 +540,10 @@ def unregister():
         wm.keyconfigs.addon.keymaps.remove(km)
     del jasperge_tools_keymaps[:]
     del bpy.types.WindowManager.jasperge_tools_settings
+    # Remove load_post handler
+    for h in bpy.app.handlers.load_post:
+        if h.__name__ == "update_jasperge_settings":
+            bpy.app.handlers.load_post.remove(h)
 
 
 if __name__ == "__main__":
