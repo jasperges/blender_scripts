@@ -437,31 +437,39 @@ class JaspergeToolsPanel(bpy.types.Panel):
         layout = self.layout
         wm = bpy.context.window_manager
 
-        col = layout.column(align=False)
+        # File options
+        box = layout.box()
+        col = box.column(align=False)
         col.label(text="File:")
         col.operator("file.incremental_save")
-        col = layout.column(align=True)
+        col.separator()
+        col = box.column(align=True)
         row = col.row(align=True)
         row.prop(wm.jasperge_tools_settings, "version")
         row.prop(wm.jasperge_tools_settings, "padding")
         col.operator("file.update_version")
-        col.separator()
 
+        # Modifier options
+        box = layout.box()
+        col = box.column(align=True)
         col.label(text="Modifiers:")
         col.operator("object.copy_modifier_settings", text="Copy Settings")
         row = col.row(align=True)
         row.operator("object.modifier_viewport_on", text="Viewport On")
         row.operator("object.modifier_viewport_off", text="Viewport Off")
-        col.separator()
 
+        # Object options
+        box = layout.box()
+        col = box.column(align=True)
         col.label(text="Object:")
         row = col.row(align=True)
         row.operator("object.wire_on")
         row.operator("object.wire_off")
-        col.separator()
 
+        # Renaming options
+        box = layout.box()
+        col = box.column(align=True)
         col.label(text="Rename:")
-        # row = col.row(align=True)
         col.prop(wm.jasperge_tools_settings, "new_name")
         col.prop(wm.jasperge_tools_settings, "start_number")
         col.operator("object.hash_rename", "Rename")
