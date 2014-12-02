@@ -139,7 +139,7 @@ class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
      'SIMPLE_DEFORM) in the viewport."""
 
     bl_description = "Turn off all the modifiers (except 'ARMATURE', 'CURVE'"\
-        "and 'SIMPLE_DEFORM) in the viewport."
+        ", 'MIRROR' and 'SIMPLE_DEFORM) in the viewport."
     bl_idname = "object.modifier_viewport_off"
     bl_label = "Modifiers viewport off"
     bl_space_type = 'VIEW_3D'
@@ -149,7 +149,10 @@ class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
         for obj in objects:
             if obj.modifiers:
                 for m in obj.modifiers:
-                    if m.type not in ('ARMATURE', 'CURVE', 'SIMPLE_DEFORM'):
+                    if m.type not in ('ARMATURE',
+                                      'CURVE',
+                                      'MIRROR',
+                                      'SIMPLE_DEFORM'):
                         m.show_viewport = False
 
         return {'FINISHED'}
