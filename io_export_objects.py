@@ -34,6 +34,7 @@ import bpy
 from bpy.types import Operator
 from bpy.props import BoolProperty, StringProperty
 from bpy_extras.io_utils import ExportHelper
+from math import degrees
 from os import path
 from time import time
 
@@ -50,6 +51,45 @@ def check_exporters():
             raise RuntimeError("Could not enable .obj export...")
 
 
+def solo_select_object(ob):
+    """
+    Only select obj and make it the active object
+    """
+    print(ob)
+    for obj in bpy.data.objects:
+        obj.select = False
+    ob.select = True
+    bpy.context.scene.objects.active = ob
+
+
+def write_transforms(objects, obj_dir):
+
+    def get_transforms(objects):
+        transform_dict = {}
+
+        for obj in objects:
+            matrix_world = obj.matrix_world
+            loc = tuple(matrix_world.to_translation())
+            loc = (loc[0], loc[2], -loc[1])
+            rot = tuple(matrix_world.to_euler())
+            rot = (degrees(rot[0]), degrees(rot[2]), -degrees(rot[1]))
+            scale = tuple(matrix_world.to_scale())
+            scale = (scale[0], scale[2], scale[1])
+            transform_dict[obj.name] = (loc, rot, scale)
+
+        return transform_dict
+
+    def write_transforms_file(transform_file, transforms):
+        transform_dict = transforms
+        with open(transform_file, 'w') as f:
+            f.write(str(transform_dict))
+
+    filename = "transforms.txt"
+    f = path.join(obj_dir, filename)
+    write_transforms_file(f, get_transforms(objects))
+    print("Exported the transforms to {f}".format(f=f))
+
+
 def export_object(**kwargs):
 
     # Pull out the variables.
@@ -57,15 +97,23 @@ def export_object(**kwargs):
     objdir = kwargs.setdefault("objdir", bpy.path.abspath("//"))
     export_mats = kwargs.setdefault("export_mats", False)
     apply_modifiers = kwargs.setdefault("apply_modifiers", True)
+    is_write_transforms = kwargs.setdefault("is_write_transforms", False)
 
     # Select only this object.
-    for obj in bpy.data.objects:
-        obj.select = False
-    ob.select = True
-    bpy.context.scene.objects.active = ob
+    solo_select_object(ob)
 
     # Get the name of the object to use in the filename.
     name = bpy.path.clean_name(ob.name)
+
+    if is_write_transforms:
+        print("Resetting transforms!")
+        # Unparent object if write_transforms is enabled
+        bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+
+        # Reset transforms if write_transforms is enabled
+        bpy.ops.object.location_clear()
+        bpy.ops.object.rotation_clear()
+        bpy.ops.object.scale_clear()
 
     # Export obj.
     filepath = path.join(objdir, "%s.obj" % name)
@@ -121,12 +169,17 @@ class ExportObjs(Operator, ExportHelper):
         description="Also export the materials",
         default=False,
         )
+    is_write_transforms = BoolProperty(
+        name="Write transformations",
+        description="Write the transformations to a file, reset all transforms before exporting to obj",
+        default=False)
 
     def execute(self, context):
 
         time1 = time()
         apply_modifiers = self.apply_modifiers
         export_mats = self.export_mats
+        is_write_transforms = self.is_write_transforms
 
         # Check for needed exporters:
         check_exporters()
@@ -141,6 +194,10 @@ class ExportObjs(Operator, ExportHelper):
         # Get the folder.
         dirpath = path.dirname(self.filepath)
 
+        if is_write_transforms:
+            # Write transforms file
+            write_transforms(objects_to_export, dirpath)
+
         for ob in objects_to_export:
             print("\n*** processing object %s (%d of %d)...\n" % (
                 ob.name,
@@ -153,6 +210,7 @@ class ExportObjs(Operator, ExportHelper):
                 objdir=dirpath,
                 apply_modifiers=apply_modifiers,
                 export_mats=export_mats,
+                is_write_transforms=is_write_transforms
                 )
 
         process_time = time() - time1
