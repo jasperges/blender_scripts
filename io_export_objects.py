@@ -131,6 +131,8 @@ def export_object(**kwargs):
             use_nurbs=False,
             use_vertex_groups=False,
             use_blen_objects=True,
+            use_smooth_groups=True,
+            use_smooth_groups_bitflags=True,
             group_by_object=False,
             group_by_material=False,
             keep_vertex_order=True,
