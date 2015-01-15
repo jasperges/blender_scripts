@@ -43,8 +43,9 @@ bl_info = {
     "description": "Save all render layers and passes to files in respectively named folders."
 }
 
-import bpy
+import os
 import re
+import bpy
 
 
 class save_images(bpy.types.Panel):
@@ -123,8 +124,10 @@ class create_nodes(bpy.types.Operator):
                     if use_folders:
                         # Distribute into subfolders for each layer and pass
                         # Example: Scene/RenderLayer/ambient_occlusion/...
-                        file_path = context.scene.name + "/" + l.name + "/" + \
-                            pass_name + "/" + l.name + "_" + pass_name
+                        file_path = "{layer}_{rpass}{sep}{layer}_{rpass}".format(
+                            layer=l.name, rpass=pass_name, sep=os.path.sep)
+                        # file_path = context.scene.name + "/" + l.name + "/" + \
+                        #     pass_name + "/" + l.name + "_" + pass_name
                     else:
                         file_path = imagebase + "_" + pass_name
 
@@ -138,8 +141,8 @@ class create_nodes(bpy.types.Operator):
         return layers
 
     def get_output(self, passout):
-        """ Find the renderlayer node's output that matches the current render
-            pass """
+        """Find the renderlayer node's output that matches the current render
+            pass"""
 
         # Renderlayer pass names and renderlayer node output names do not match
         # which is why we're using this dictionary (and regular expressions)
@@ -167,13 +170,13 @@ class create_nodes(bpy.types.Operator):
         return output
 
     def create_single_output(
-        self, context, tree, links,  node, output_node, layer, rl
+        self, context, tree, links, node, output_node, layer, rl
     ):
-        """ Create a single file output node for all render layers and
-            render passes. Much more orderly and efficient in blender versions
-            above 2.66. In 2.66 and below the API doesn't support creating
-            new file output node sockets so we'll be using another function
-            to create a node per render pass """
+        """Create a single file output node for all render layers and
+           render passes. Much more orderly and efficient in blender versions
+           above 2.66. In 2.66 and below the API doesn't support creating
+           new file output node sockets so we'll be using another function
+           to create a node per render pass"""
 
         output_node = tree.nodes.new(type=self.node_types['new']['OF'])
 
@@ -328,6 +331,11 @@ class folder_options(bpy.types.PropertyGroup):
         name="Create Folders",
         default=True
     )
+
+
+# class prefix_name(bpy.types.PropertyGroup):
+#     prefix_name = bpy.props.StringProperty(
+#         description="Prefix to use for filenames (if empty use filename)",)
 
 
 def register():
