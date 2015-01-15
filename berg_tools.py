@@ -225,8 +225,8 @@ def write_info_to_scene(anim_file):
     bpy.context.scene["bergtools_animfile"] = info
 
 
-def update_anim():
-    info = bpy.context.scene['bergtools_animfile_info']
+# def update_anim():
+#     info = bpy.context.scene['bergtools_animfile_info']
 
 
 def create_load_handler():
@@ -247,7 +247,8 @@ def berg_animation_handler(*args):
                 group_objects[obj_name].animation_data.action = action
                 # print("assigned {} to {}".format(action.name, obj_name))
             except KeyError:
-                print("Could not find object {} in dupli group".format(obj_name))
+                # print("Could not find object {} in dupli group".format(obj_name))
+                pass
     # print("Assigned actions")
 
 try:
