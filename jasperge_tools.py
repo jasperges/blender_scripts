@@ -40,6 +40,7 @@ bl_info = {
     "category": "3D View"}
 
 import os
+import shutil
 import glob
 import re
 import bpy
@@ -264,14 +265,17 @@ class FILE_incremental_save(bpy.types.Operator):
         new_incr_filename = "%s.%.4d.blend" % (filebasename, file_num)
         new_incr_file = os.path.join(incr_save_file_dir, new_incr_filename)
 
-        bpy.ops.wm.save_as_mainfile(
-            filepath=new_incr_file,
-            check_existing=False,
-            compress=True,
-            copy=True,
-            )
+        # bpy.ops.wm.save_as_mainfile(
+        #     filepath=new_incr_file,
+        #     check_existing=False,
+        #     compress=True,
+        #     copy=True,
+        #     )
 
         if not avoid_double_save:
+            # Copy current saved blend file to incremental folder
+            shutil.copy2(filepath, new_incr_file)
+            # Save the current (modified) blend file
             bpy.ops.wm.save_mainfile(check_existing=False)
 
         # Restore user preferences.
