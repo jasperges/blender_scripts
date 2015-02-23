@@ -22,7 +22,6 @@
 
 # TODO: - Expand load_post handler to try to get the version number and padding
 #         from the filename
-#       - unregister load_post handler
 #       - Properly add rename to menu (immediately presenting options)
 #       - Properly add update version to menu (immediately presenting options)
 #       - Add confirmation to overwrite file if file already exists for version update.
