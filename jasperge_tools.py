@@ -177,40 +177,26 @@ class OBJECT_OT_modifier_viewport_on(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_modifier_mirror_off(bpy.types.Operator):
-    """Turn off the 'MIRROR' modifiers for all objects in the viewport."""
+class OBJECT_OT_modifier_mirror_toggle(bpy.types.Operator):
+    """Turn on/off the 'MIRROR' modifiers for all objects in the viewport."""
 
-    bl_description = "Turn off the 'MIRROR' modifiers for all objects in the viewport."
-    bl_idname = "object.modifier_mirror_off"
-    bl_label = "Mirror off"
-    bl_space_type = 'VIEW_3D'
-
-    def execute(self, context):
-        objects = bpy.data.objects
-        for obj in objects:
-            if obj.modifiers:
-                for m in obj.modifiers:
-                    if m.type == 'MIRROR':
-                        m.show_viewport = False
-
-        return {'FINISHED'}
-
-
-class OBJECT_OT_modifier_mirror_on(bpy.types.Operator):
-    """Turn on the 'MIRROR' modifiers for all objects in the viewport."""
-
-    bl_description = "Turn on the 'MIRROR' modifiers for all objects in the viewport."
-    bl_idname = "object.modifier_mirror_on"
+    bl_description = "Turn on/off the 'MIRROR' modifiers for all objects in the viewport."
+    bl_idname = "object.modifier_mirror_toggle"
     bl_label = "Mirror on"
     bl_space_type = 'VIEW_3D'
 
+    use_mirror = BoolProperty(
+        name="Mirror",
+        description="Choose to turn mirror modifier on or off",
+        default=True)
+
     def execute(self, context):
         objects = bpy.data.objects
         for obj in objects:
             if obj.modifiers:
                 for m in obj.modifiers:
                     if m.type == 'MIRROR':
-                        m.show_viewport = True
+                        m.show_viewport = self.use_mirror
 
         return {'FINISHED'}
 
@@ -240,6 +226,31 @@ class OBJECT_OT_modifier_expand(bpy.types.Operator):
         for area in context.screen.areas:
             if area.type == 'PROPERTIES':
                 area.tag_redraw()
+
+        return {'FINISHED'}
+
+
+class OBJECT_OT_modifier_subsurf_optimal(bpy.types.Operator):
+    """Turn on/off optimal display for all subsurf modifiers."""
+
+    bl_description = "Turn on optimal display for all subsurf modifiers."
+    bl_idname = "object.modifier_optimal_subsurf"
+    bl_label = "Optimal display"
+
+    use_optimal = BoolProperty(
+        name="Optimal",
+        description="Use optimal display or not (True/False)",
+        default=True)
+
+    def execute(self, context):
+        objects = bpy.data.objects
+        for obj in objects:
+            try:
+                for m in obj.modifiers:
+                    if m.type == 'SUBSURF':
+                        m.show_only_control_edges = self.use_optimal
+            except AttributeError:
+                pass
 
         return {'FINISHED'}
 
@@ -531,13 +542,20 @@ class JaspergeToolsPanel(bpy.types.Panel):
         row.operator("object.modifier_viewport_on", text="Viewport On")
         row.operator("object.modifier_viewport_off", text="Viewport Off")
         row = col.row(align=True)
-        row.operator("object.modifier_mirror_on", text="Mirror On")
-        row.operator("object.modifier_mirror_off", text="Mirror Off")
+        row.operator("object.modifier_mirror_toggle",
+                     text="Mirror On").use_mirror = True
+        row.operator("object.modifier_mirror_toggle",
+                     text="Mirror Off").use_mirror = False
         row = col.row(align=True)
         row.operator("object.modifier_expand",
                      text="Expand options").expand = True
         row.operator("object.modifier_expand",
                      text="Collapse options").expand = False
+        row = col.row(align=True)
+        row.operator("object.modifier_optimal_subsurf",
+                     text="Optimal display").use_optimal = True
+        row.operator("object.modifier_optimal_subsurf",
+                     text="Non-optimal display").use_optimal = False
 
         # Object options
         box = layout.box()
