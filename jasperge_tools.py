@@ -44,7 +44,7 @@ import glob
 import re
 import bpy
 from bpy.app.handlers import persistent
-from bpy.props import StringProperty, IntProperty
+from bpy.props import StringProperty, IntProperty, BoolProperty
 
 
 class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
@@ -135,8 +135,8 @@ class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
 
 
 class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
-    """Turn off all the modifiers (except 'ARMATURE', 'CURVE' and
-     'SIMPLE_DEFORM) in the viewport."""
+    """Turn off all the modifiers (except 'ARMATURE', 'CURVE',
+       'MIRROR' and 'SIMPLE_DEFORM) in the viewport."""
 
     bl_description = "Turn off all the modifiers (except 'ARMATURE', 'CURVE'"\
         ", 'MIRROR' and 'SIMPLE_DEFORM) in the viewport."
@@ -173,6 +173,73 @@ class OBJECT_OT_modifier_viewport_on(bpy.types.Operator):
                 for m in obj.modifiers:
                     if m.type != 'ARMATURE':
                         m.show_viewport = True
+
+        return {'FINISHED'}
+
+
+class OBJECT_OT_modifier_mirror_off(bpy.types.Operator):
+    """Turn off the 'MIRROR' modifiers for all objects in the viewport."""
+
+    bl_description = "Turn off the 'MIRROR' modifiers for all objects in the viewport."
+    bl_idname = "object.modifier_mirror_off"
+    bl_label = "Mirror off"
+    bl_space_type = 'VIEW_3D'
+
+    def execute(self, context):
+        objects = bpy.data.objects
+        for obj in objects:
+            if obj.modifiers:
+                for m in obj.modifiers:
+                    if m.type == 'MIRROR':
+                        m.show_viewport = False
+
+        return {'FINISHED'}
+
+
+class OBJECT_OT_modifier_mirror_on(bpy.types.Operator):
+    """Turn on the 'MIRROR' modifiers for all objects in the viewport."""
+
+    bl_description = "Turn on the 'MIRROR' modifiers for all objects in the viewport."
+    bl_idname = "object.modifier_mirror_on"
+    bl_label = "Mirror on"
+    bl_space_type = 'VIEW_3D'
+
+    def execute(self, context):
+        objects = bpy.data.objects
+        for obj in objects:
+            if obj.modifiers:
+                for m in obj.modifiers:
+                    if m.type == 'MIRROR':
+                        m.show_viewport = True
+
+        return {'FINISHED'}
+
+
+class OBJECT_OT_modifier_expand(bpy.types.Operator):
+    """Expand or collapse all modifier options."""
+
+    bl_description = "Expand or collapse all modifier options."
+    bl_idname = "object.modifier_expand"
+    bl_label = "Expand/Collapse modifier options"
+
+    expand = BoolProperty(
+        name="Expand",
+        description="Expand or collapse options (True/False",
+        default=True)
+
+    def execute(self, context):
+        objects = bpy.data.objects
+        for obj in objects:
+            try:
+                for m in obj.modifiers:
+                    m.show_expanded = self.expand
+            except AttributeError:
+                pass
+
+        # force refresh of properties panel
+        for area in context.screen.areas:
+            if area.type == 'PROPERTIES':
+                area.tag_redraw()
 
         return {'FINISHED'}
 
@@ -463,6 +530,14 @@ class JaspergeToolsPanel(bpy.types.Panel):
         row = col.row(align=True)
         row.operator("object.modifier_viewport_on", text="Viewport On")
         row.operator("object.modifier_viewport_off", text="Viewport Off")
+        row = col.row(align=True)
+        row.operator("object.modifier_mirror_on", text="Mirror On")
+        row.operator("object.modifier_mirror_off", text="Mirror Off")
+        row = col.row(align=True)
+        row.operator("object.modifier_expand",
+                     text="Expand options").expand = True
+        row.operator("object.modifier_expand",
+                     text="Collapse options").expand = False
 
         # Object options
         box = layout.box()
