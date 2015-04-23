@@ -201,6 +201,30 @@ class OBJECT_OT_modifier_mirror_toggle(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class OBJECT_OT_modifier_boolean_toggle(bpy.types.Operator):
+    """Turn on/off the 'BOOLEAN' modifiers for all objects in the viewport."""
+
+    bl_description = "Turn on/off the 'BOOLEAN' modifiers for all objects in the viewport."
+    bl_idname = "object.modifier_boolean_toggle"
+    bl_label = "Boolean on"
+    bl_space_type = 'VIEW_3D'
+
+    use_boolean = BoolProperty(
+        name="Boolean",
+        description="Choose to turn boolean modifier on or off",
+        default=True)
+
+    def execute(self, context):
+        objects = bpy.data.objects
+        for obj in objects:
+            if obj.modifiers:
+                for m in obj.modifiers:
+                    if m.type == 'BOOLEAN':
+                        m.show_viewport = self.use_boolean
+
+        return {'FINISHED'}
+
+
 class OBJECT_OT_modifier_expand(bpy.types.Operator):
     """Expand or collapse all modifier options."""
 
@@ -611,6 +635,11 @@ class JaspergeToolsPanel(bpy.types.Panel):
                      text="Mirror On").use_mirror = True
         row.operator("object.modifier_mirror_toggle",
                      text="Mirror Off").use_mirror = False
+        row = col.row(align=True)
+        row.operator("object.modifier_boolean_toggle",
+                     text="Boolean On").use_boolean = True
+        row.operator("object.modifier_boolean_toggle",
+                     text="Boolean Off").use_boolean = False
         row = col.row(align=True)
         row.operator("object.modifier_expand",
                      text="Expand options").expand = True
