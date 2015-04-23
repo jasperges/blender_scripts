@@ -44,7 +44,7 @@ import glob
 import re
 import bpy
 from bpy.app.handlers import persistent
-from bpy.props import StringProperty, IntProperty, BoolProperty
+from bpy.props import StringProperty, IntProperty, BoolProperty, FloatProperty
 
 
 class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
@@ -483,6 +483,65 @@ class OBJECT_OT_hash_rename(bpy.types.Operator):
     #     return wm.invoke_props_popup(self, event)
 
 
+class SetNormalAngle(bpy.types.Operator):
+    """Set the normal angle of the selected objects and turn on auto smooth"""
+    bl_idname = "object.jaspergetools_set_normal_angle"
+    bl_label = "Set normal angle"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    normal_angle = FloatProperty(
+        name="Angle",
+        default=40,
+        min=0,
+        max=180)
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    def execute(self, context):
+        wm = bpy.context.window_manager
+        self.normal_angle = wm.jasperge_tools_settings.normal_angle
+        for obj in bpy.context.selected_objects:
+            bpy.ops.object.shade_smooth()
+            try:
+                obj.data.use_auto_smooth = True
+                obj.data.auto_smooth_angle = radians(self.normal_angle)
+            except AttributeError:
+                pass
+        return {'FINISHED'}
+
+
+class HideRelationshipLines(bpy.types.Operator):
+    """Hide relationship lines in every 3D View"""
+    bl_idname = "wm.jaspergetools_hide_relationship_lines"
+    bl_label = "Hide relationship lines"
+
+    def execute(self, context):
+        for screen in bpy.data.screens:
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    for space in area.spaces:
+                        if space.type == 'VIEW_3D':
+                            space.show_relationship_lines = False
+        return {'FINISHED'}
+
+
+class ShowRelationshipLines(bpy.types.Operator):
+    """Show relationship lines in every 3D View"""
+    bl_idname = "wm.jaspergetools_show_relationship_lines"
+    bl_label = "Show relationship lines"
+
+    def execute(self, context):
+        for screen in bpy.data.screens:
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    for space in area.spaces:
+                        if space.type == 'VIEW_3D':
+                            space.show_relationship_lines = True
+        return {'FINISHED'}
+
+
 class JaspergeToolsSettings(bpy.types.PropertyGroup):
     new_name = StringProperty(
         name="New name",
@@ -507,6 +566,12 @@ class JaspergeToolsSettings(bpy.types.PropertyGroup):
         description="The padding of the version number",
         default=2,
         min=1)
+
+    normal_angle = FloatProperty(
+        name="Angle",
+        default=40,
+        min=0,
+        max=180)
 
 
 class JaspergeToolsPanel(bpy.types.Panel):
@@ -564,6 +629,9 @@ class JaspergeToolsPanel(bpy.types.Panel):
         row = col.row(align=True)
         row.operator("object.wire_on")
         row.operator("object.wire_off")
+        row = col.row(align=True)
+        row.operator("object.jaspergetools_set_normal_angle")
+        row.prop(wm.jasperge_tools_settings, "normal_angle")
 
         # Renaming options
         box = layout.box()
@@ -572,6 +640,16 @@ class JaspergeToolsPanel(bpy.types.Panel):
         col.prop(wm.jasperge_tools_settings, "new_name")
         col.prop(wm.jasperge_tools_settings, "start_number")
         col.operator("object.hash_rename", "Rename")
+
+        # General options
+        box = layout.box()
+        col = box.column(align=True)
+        col.label(text="General:")
+        # row = col.row(align=True)
+        row = col.split(.5, align=True)
+        row.label(text="Relationship lines:")
+        row.operator("wm.jaspergetools_show_relationship_lines", text="On")
+        row.operator("wm.jaspergetools_hide_relationship_lines", text="Off")
 
 
 class JaspergeToolsMenu(bpy.types.Menu):
