@@ -40,7 +40,8 @@ from bpy.props import (StringProperty,
                        EnumProperty,
                        BoolProperty)
 from bpy_extras.io_utils import ImportHelper
-from os import path
+import sys
+from os import path, devnull
 from glob import glob
 import time
 
@@ -172,6 +173,10 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         Imports an obj file and returns the name of the object
         '''
 
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        dvnull = open(devnull, 'w')
+        sys.stdout = sys.stderr = dvnull
         try:
             bpy.ops.import_scene.obj(
                 filepath=f,
@@ -187,6 +192,8 @@ class ImportObs(bpy.types.Operator, ImportHelper):
                 global_clamp_size=0)
         except AttributeError:
             self.report({'ERROR'}, "obj importer not loaded, aborting...")
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
         return self.rename_object(f)
 
