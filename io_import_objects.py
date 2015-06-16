@@ -175,16 +175,16 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         try:
             bpy.ops.import_scene.obj(
                 filepath=f,
-                use_ngons=True,
+                axis_forward='-Z',
+                axis_up='Y',
                 use_edges=True,
                 use_smooth_groups=True,
                 use_split_objects=False,
                 use_split_groups=False,
                 use_groups_as_vgroups=False,
                 use_image_search=True,
-                global_clamp_size=0,
-                axis_forward='-Z',
-                axis_up='Y')
+                split_mode='OFF',
+                global_clamp_size=0)
         except AttributeError:
             self.report({'ERROR'}, "obj importer not loaded, aborting...")
 
