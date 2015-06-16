@@ -17,7 +17,6 @@
 # ##### END GPL LICENSE BLOCK #####
 
 # Todo:
-#   - disable operator if obj importer is not loaded
 #   - only preserve selected modifiers
 
 bl_info = {
@@ -40,6 +39,7 @@ from bpy.props import (StringProperty,
                        EnumProperty,
                        BoolProperty)
 from bpy_extras.io_utils import ImportHelper
+import addon_utils
 import sys
 from os import path, devnull
 from glob import glob
@@ -106,13 +106,6 @@ class ImportObs(bpy.types.Operator, ImportHelper):
             description="Apply rotation after import",
             default=False)
 
-    @classmethod
-    def poll(cls, context):
-        '''
-        !!!
-        Return True if obj importer is enabled
-        '''
-        return True
 
     def draw(self, context):
         layout = self.layout
@@ -177,21 +170,27 @@ class ImportObs(bpy.types.Operator, ImportHelper):
         old_stderr = sys.stderr
         dvnull = open(devnull, 'w')
         sys.stdout = sys.stderr = dvnull
-        try:
-            bpy.ops.import_scene.obj(
-                filepath=f,
-                axis_forward='-Z',
-                axis_up='Y',
-                use_edges=True,
-                use_smooth_groups=True,
-                use_split_objects=False,
-                use_split_groups=False,
-                use_groups_as_vgroups=False,
-                use_image_search=True,
-                split_mode='OFF',
-                global_clamp_size=0)
-        except AttributeError:
-            self.report({'ERROR'}, "obj importer not loaded, aborting...")
+
+        # Check if obj importer is enabled
+        if not addon_utils.check("io_scene_obj")[1]:
+            # Enable it
+            if not addon_utils.enable("io_scene_obj"):
+                self.report({'ERROR'}, "could not load obj importer, aborting...")
+        # try:
+        bpy.ops.import_scene.obj(
+            filepath=f,
+            axis_forward='-Z',
+            axis_up='Y',
+            use_edges=True,
+            use_smooth_groups=True,
+            use_split_objects=False,
+            use_split_groups=False,
+            use_groups_as_vgroups=False,
+            use_image_search=True,
+            split_mode='OFF',
+            global_clamp_size=0)
+        # except AttributeError:
+        #     self.report({'ERROR'}, "obj importer not loaded, aborting...")
         sys.stdout = old_stdout
         sys.stderr = old_stderr
 
