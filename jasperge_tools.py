@@ -20,11 +20,21 @@
 
 # The 'copy modifier settings' is from an addon by Sergey Sharybin.
 
-# TODO: - Expand load_post handler to try to get the version number and padding
-#         from the filename
-#       - Properly add rename to menu (immediately presenting options)
-#       - Properly add update version to menu (immediately presenting options)
-#       - Add confirmation to overwrite file if file already exists for version update.
+# TODO:
+#   - Expand load_post handler to try to get the version number and padding
+#     from the filename
+#   - Properly add rename to menu (immediately presenting options)
+#   - Properly add update version to menu (immediately presenting options)
+#   - Add confirmation to overwrite file if file already exists for version update.
+#
+# IDEAS:
+#   - List all objects the selected objects depend on (parents, modidiers, contraints, etc.)
+#       'object' -> mirror, boolean, data transfer, UV project
+#       'target' -> shrinkwrap, normal edit
+#        'object from' -> UV warp
+#        'object to' -> UV warp
+#   - Orient objects according to empties (which should be easily placed and
+#     oriented according to the mesh or other objects)
 
 
 bl_info = {
@@ -42,6 +52,7 @@ import os
 import shutil
 import glob
 import re
+from math import radians
 import bpy
 from bpy.app.handlers import persistent
 from bpy.props import StringProperty, IntProperty, BoolProperty, FloatProperty
