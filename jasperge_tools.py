@@ -537,8 +537,8 @@ class SetNormalAngle(bpy.types.Operator):
     def execute(self, context):
         wm = bpy.context.window_manager
         self.normal_angle = wm.jasperge_tools_settings.normal_angle
-        for obj in bpy.context.selected_objects:
-            bpy.ops.object.shade_smooth()
+        bpy.ops.object.shade_smooth()
+        for obj in context.selected_objects:
             try:
                 obj.data.use_auto_smooth = True
                 obj.data.auto_smooth_angle = radians(self.normal_angle)
