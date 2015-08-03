@@ -63,7 +63,7 @@ class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
     """all other selected objects."""
 
     bl_description = "Copy settings of modifiers from active object to all"\
-        " other selected objects."
+        " other selected objects"
     bl_idname = "object.copy_modifier_settings"
     bl_label = "Copy Modifier Settings"
     bl_space_type = 'VIEW_3D'
@@ -150,7 +150,7 @@ class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
        'MIRROR' and 'SIMPLE_DEFORM) in the viewport."""
 
     bl_description = "Turn off all the modifiers (except 'ARMATURE', 'CURVE'"\
-        ", 'MIRROR' and 'SIMPLE_DEFORM) in the viewport."
+        ", 'MIRROR' and 'SIMPLE_DEFORM) in the viewport"
     bl_idname = "object.modifier_viewport_off"
     bl_label = "Modifiers viewport off"
     bl_space_type = 'VIEW_3D'
@@ -172,7 +172,7 @@ class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
 class OBJECT_OT_modifier_viewport_on(bpy.types.Operator):
     """Turn on all the modifiers in the viewport."""
 
-    bl_description = "Turn on all modifiers in the viewport."
+    bl_description = "Turn on all modifiers in the viewport"
     bl_idname = "object.modifier_viewport_on"
     bl_label = "Modifiers viewport on"
     bl_space_type = 'VIEW_3D'
@@ -191,7 +191,7 @@ class OBJECT_OT_modifier_viewport_on(bpy.types.Operator):
 class OBJECT_OT_modifier_mirror_toggle(bpy.types.Operator):
     """Turn on/off the 'MIRROR' modifiers for all objects in the viewport."""
 
-    bl_description = "Turn on/off the 'MIRROR' modifiers for all objects in the viewport."
+    bl_description = "Turn on/off the 'MIRROR' modifiers for all objects in the viewport"
     bl_idname = "object.modifier_mirror_toggle"
     bl_label = "Mirror on"
     bl_space_type = 'VIEW_3D'
@@ -215,7 +215,7 @@ class OBJECT_OT_modifier_mirror_toggle(bpy.types.Operator):
 class OBJECT_OT_modifier_boolean_toggle(bpy.types.Operator):
     """Turn on/off the 'BOOLEAN' modifiers for all objects in the viewport."""
 
-    bl_description = "Turn on/off the 'BOOLEAN' modifiers for all objects in the viewport."
+    bl_description = "Turn on/off the 'BOOLEAN' modifiers for all objects in the viewport"
     bl_idname = "object.modifier_boolean_toggle"
     bl_label = "Boolean on"
     bl_space_type = 'VIEW_3D'
@@ -239,7 +239,7 @@ class OBJECT_OT_modifier_boolean_toggle(bpy.types.Operator):
 class OBJECT_OT_modifier_expand(bpy.types.Operator):
     """Expand or collapse all modifier options."""
 
-    bl_description = "Expand or collapse all modifier options."
+    bl_description = "Expand or collapse all modifier options"
     bl_idname = "object.modifier_expand"
     bl_label = "Expand/Collapse modifier options"
 
@@ -268,7 +268,7 @@ class OBJECT_OT_modifier_expand(bpy.types.Operator):
 class OBJECT_OT_modifier_subsurf_optimal(bpy.types.Operator):
     """Turn on/off optimal display for all subsurf modifiers."""
 
-    bl_description = "Turn on optimal display for all subsurf modifiers."
+    bl_description = "Turn on optimal display for all subsurf modifiers"
     bl_idname = "object.modifier_optimal_subsurf"
     bl_label = "Optimal display"
 
@@ -293,7 +293,7 @@ class OBJECT_OT_modifier_subsurf_optimal(bpy.types.Operator):
 class OBJECT_OT_wire_on(bpy.types.Operator):
     """Turn on the wire display option for all mesh objects."""
 
-    bl_description = "Turn on the wire display option for all mesh objects."
+    bl_description = "Turn on the wire display option for all mesh objects"
     bl_idname = "object.wire_on"
     bl_label = "Wire on"
     bl_space_type = 'VIEW_3D'
@@ -310,7 +310,7 @@ class OBJECT_OT_wire_on(bpy.types.Operator):
 class OBJECT_OT_wire_off(bpy.types.Operator):
     """Turn off the wire display option for all mesh objects."""
 
-    bl_description = "Turn off the wire display option for all mesh objects."
+    bl_description = "Turn off the wire display option for all mesh objects"
     bl_idname = "object.wire_off"
     bl_label = "Wire off"
     bl_space_type = 'VIEW_3D'
@@ -332,7 +332,7 @@ class FILE_incremental_save(bpy.types.Operator):
     (./incrementalSave/<filename>/<filename>.xxxx.blend)
     There is no limitation for the amount of incremental save files"""
 
-    bl_description = "Do an incremental save for the file (Maya style)."
+    bl_description = "Do an incremental save for the file (Maya style)"
     bl_idname = "file.incremental_save"
     bl_label = "Incremental Save"
 
@@ -404,7 +404,7 @@ class FILE_update_version(bpy.types.Operator):
     E.g.: filename: my_blend_file_v010.blend -> my_blend_file_v011.blend
           render output: //render/v010/xxx -> //render/v011/xxx"""
 
-    bl_description = "Update the version of the filename and the render path."
+    bl_description = "Update the version of the filename and the render path"
     bl_idname = "file.update_version"
     bl_label = "Update version"
 
@@ -459,7 +459,7 @@ class FILE_update_version(bpy.types.Operator):
 class OBJECT_OT_hash_rename(bpy.types.Operator):
     """Hash rename all selected objects."""
 
-    bl_description = "Hash rename all selected objects."
+    bl_description = "Hash rename all selected objects"
     bl_idname = "object.hash_rename"
     bl_label = "Hash rename"
     bl_space_type = 'VIEW_3D'
@@ -472,12 +472,12 @@ class OBJECT_OT_hash_rename(bpy.types.Operator):
     new_name = StringProperty(
         name="New name",
         description="The new name for the objects. Use #-es to insert "
-                    "numbering. The amount of #-es determines the padding.",
+                    "numbering. The amount of #-es determines the padding",
         default="")
 
     start_number = IntProperty(
         name="Start",
-        description="Start the numbering with this number.",
+        description="Start the numbering with this number",
         default=1,
         min=0)
 
@@ -581,12 +581,12 @@ class JaspergeToolsSettings(bpy.types.PropertyGroup):
     new_name = StringProperty(
         name="New name",
         description="The new name for the objects. Use #-es to insert "
-                    "numbering. The amount of #-es determines the padding.",
+                    "numbering. The amount of #-es determines the padding",
         default="")
 
     start_number = IntProperty(
         name="Start",
-        description="Start the numbering with this number.",
+        description="Start the numbering with this number",
         default=1,
         min=0)
 
