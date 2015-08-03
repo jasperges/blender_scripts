@@ -470,7 +470,7 @@ def main(context, self):
 
 
 class Wires(bpy.types.Operator):
-    """Add (a) wire(s) between the selected objects."""
+    """Add (a) wire(s) between the selected objects"""
     bl_idname = "curve.wires"
     bl_label = "Create wire(s)"
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
@@ -483,18 +483,18 @@ class Wires(bpy.types.Operator):
 
     name = StringProperty(
                           name="Name",
-                          description="The (base)name of the wire object(s).",
+                          description="The (base)name of the wire object(s)",
                           default="wire",
                           )
     seed = IntProperty(
                        name="Seed",
-                       description="The seed to drive the random values.",
+                       description="The seed to drive the random values",
                        default=2105,
                        min=1
                        )
     num_wires = IntProperty(
                             name="Amount",
-                            description="The number of wires to create.",
+                            description="The number of wires to create",
                             default=1,
                             min=1,
                             max=1000,
@@ -502,31 +502,31 @@ class Wires(bpy.types.Operator):
                            )
     one_object = BoolProperty(
                               name="One object",
-                              description="Create the wires in one object instead of one object per wire.",
+                              description="Create the wires in one object instead of one object per wire",
                               default=True,
                               )
     assign_mats = BoolProperty(
                                name="Assign materials",
-                               description="Assign the material from the connected face of the active object to the wire(s).",
+                               description="Assign the material from the connected face of the active object to the wire(s)",
                                default=False,
                                )
     faces_items = [
-                   ("SELECTED", "Selected", "Use only the selected faces (all faces if nothing is selected)."),
+                   ("SELECTED", "Selected", "Use only the selected faces (all faces if nothing is selected)"),
                    ("ALL", "All", "Use all the faces of the object."),
                    ]
     faces = EnumProperty(
                          name="Use faces",
-                         description="Choose which faces to use.",
+                         description="Choose which faces to use",
                          items=faces_items,
                          )
     use_mat = BoolProperty(
                            name="Use materials",
-                           description="Connect the wire(s) to faces with the same material (if possible).",
+                           description="Connect the wire(s) to faces with the same material (if possible)",
                            default=False
                            )
     start_drape = FloatProperty(
                                 name="Start drape",
-                                description="How much the wire(s) start(s) hanging at the end points.",
+                                description="How much the wire(s) start(s) hanging at the end points",
                                 default=0.0,
                                 min=-10.0,
                                 max=10.0,
@@ -536,7 +536,7 @@ class Wires(bpy.types.Operator):
                                 )
     start_drape_random = FloatProperty(
                                  name="Random start drape",
-                                 description="The amount of random start drape.",
+                                 description="The amount of random start drape",
                                  default=0.0,
                                  min=-10.0,
                                  max=10.0,
@@ -546,7 +546,7 @@ class Wires(bpy.types.Operator):
                                  )
     drape = FloatProperty(
                           name="Drape",
-                          description="The drape of the wire(s) (how much the wire(s) hang(s).",
+                          description="The drape of the wire(s) (how much the wire(s) hang(s)",
                           default=1.0,
                           soft_min=-10.0,
                           soft_max=10.0,
@@ -554,7 +554,7 @@ class Wires(bpy.types.Operator):
                           )
     drape_random = FloatProperty(
                                  name="Random drape",
-                                 description="The amount of random drape.",
+                                 description="The amount of random drape",
                                  default=0.5,
                                  soft_min=-10.0,
                                  soft_max=10.0,
@@ -562,7 +562,7 @@ class Wires(bpy.types.Operator):
                                  )
     midpoint_tangent = FloatProperty(
                                      name="Tangent",
-                                     description="The 'shallowness' of the curve of the midpoint.",
+                                     description="The 'shallowness' of the curve of the midpoint",
                                      default=1.0,
                                      min=-10.0,
                                      max=10.0,
@@ -572,7 +572,7 @@ class Wires(bpy.types.Operator):
                                      )
     midpoint_u = FloatProperty(
                                name="Offset U",
-                               description="The offset of the midpoint along the wire(s).",
+                               description="The offset of the midpoint along the wire(s)",
                                default=0.0,
                                soft_min=-10.0,
                                soft_max=10.0,
@@ -580,7 +580,7 @@ class Wires(bpy.types.Operator):
                                )
     midpoint_random_u = FloatProperty(
                                       name="Random U",
-                                      description="The random offset of the midpoint along the wire(s).",
+                                      description="The random offset of the midpoint along the wire(s)",
                                       default=0.0,
                                       min=0.0,
                                       soft_max=10.0,
@@ -588,7 +588,7 @@ class Wires(bpy.types.Operator):
                                       )
     midpoint_v = FloatProperty(
                                name="Offset V",
-                               description="The offset of the midpoint perpendicular to the wire(s).",
+                               description="The offset of the midpoint perpendicular to the wire(s)",
                                default=0.0,
                                soft_min=-10.0,
                                soft_max=10.0,
@@ -596,7 +596,7 @@ class Wires(bpy.types.Operator):
                                )
     midpoint_random_v = FloatProperty(
                                       name="Random V",
-                                      description="The random offset of the midpoint perpendicular to the wire(s).",
+                                      description="The random offset of the midpoint perpendicular to the wire(s)",
                                       default=0.0,
                                       min=0.0,
                                       soft_max=10.0,
@@ -604,7 +604,7 @@ class Wires(bpy.types.Operator):
                                       )
     wire_bevel_depth = FloatProperty(
                                      name="Thickness",
-                                     description="The thickness of the wire(s).",
+                                     description="The thickness of the wire(s)",
                                      default=0.01,
                                      min=0.0001,
                                      soft_max=1.0,
@@ -612,7 +612,7 @@ class Wires(bpy.types.Operator):
                                      )
     wire_bevel_resolution = IntProperty(
                                         name="V resolution",
-                                        description="The resolution of the cross section(s).",
+                                        description="The resolution of the cross section(s)",
                                         default=1,
                                         min=0,
                                         max=32,
@@ -620,7 +620,7 @@ class Wires(bpy.types.Operator):
                                         )
     wire_resolution = IntProperty(
                                   name="Preview U",
-                                  description="The preview resolution of the wire(s).",
+                                  description="The preview resolution of the wire(s)",
                                   default=12,
                                   min=1,
                                   max=64,
@@ -628,7 +628,7 @@ class Wires(bpy.types.Operator):
                                   )
     wire_render_resolution = IntProperty(
                                          name="Render U",
-                                         description="The render resolution of the wire(s) (0 means: is the same as Preview U.",
+                                         description="The render resolution of the wire(s) (0 means: is the same as Preview U",
                                          default=0,
                                          min=0,
                                          max=64,
