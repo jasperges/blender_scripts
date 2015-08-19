@@ -95,7 +95,7 @@ def get_random_point(ob, self, material=None):
 
     get_random_point(ob)
 
-    Get a random point in space on the (selected faces) of an object.
+    Get a random point in space on the (selected) faces of an object.
 
         Parameters:
             ob - The object to work on.
