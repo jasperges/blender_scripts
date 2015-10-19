@@ -48,16 +48,33 @@ bl_info = {
     "tracker_url": "",
     "category": "3D View"}
 
+import sys
 import os
 import shutil
 import glob
 import re
 from math import radians
+from io import StringIO
 import bpy
 from bpy.app.handlers import persistent
 from bpy.props import StringProperty, IntProperty, BoolProperty, FloatProperty
 
 
+### Helper functions
+def print_progress(progress, min=0, max=100, barlen=30, item=""):
+    if max <= min:
+        return
+    total_len = max - min
+    bar_progress = int((progress - min) * barlen / total_len) * "="
+    bar_empty = (barlen - int((progress - min) * barlen / total_len)) * " "
+    percentage = "".join((str(int((progress - min) / total_len * 100)), "%"))
+    item = "".join(("  --  ", item))
+    bar = "".join(("[", bar_progress, bar_empty, "]", " ", percentage, item))
+    bar = "".join((bar, (130 - len(bar)) * " "))
+    print(bar, end="\r")
+
+
+### Operators and other classes
 class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
     """Copy settings of modifiers from active object to """
     """all other selected objects."""
@@ -547,6 +564,64 @@ class SetNormalAngle(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class MakeNormalsConsistent(bpy.types.Operator):
+    """Make the normals of all selected objects consistent"""
+    bl_idname = "object.jasperge_tools_make_normals_consistent"
+    bl_label = "Recalculate Normals"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    inside = BoolProperty(
+        name="Inside",
+        default=False)
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        wm = bpy.context.window_manager
+        self.inside = wm.jasperge_tools_settings.inside
+        print("\nRecalculating the normals of all selected objects")
+        for i, obj in enumerate(context.selected_objects):
+            print_progress(i, max=len(context.selected_objects) - 1, item=obj.name)
+            context.scene.objects.active = obj
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.normals_make_consistent(inside=self.inside)
+            bpy.ops.object.mode_set(mode='OBJECT')
+        print()
+        return {'FINISHED'}
+
+
+class RemoveDoubles(bpy.types.Operator):
+    """Remove doubles of all selected objects"""
+    bl_idname = "object.jasperge_tools_remove_doubles"
+    bl_label = "Remove Doubles"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    threshold = FloatProperty(
+        name="Merge Distance",
+        default=0.0001)
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        wm = bpy.context.window_manager
+        self.threshold = wm.jasperge_tools_settings.threshold
+        print("\nRemoving double vertices of all selected objects")
+        for i, obj in enumerate(context.selected_objects):
+            print_progress(i, max=len(context.selected_objects) - 1, item=obj.name)
+            context.scene.objects.active = obj
+            bpy.ops.object.mode_set(mode='EDIT')
+            sys.stdout = StringIO()
+            bpy.ops.mesh.remove_doubles(threshold=self.threshold, use_unselected=True)
+            sys.stdout = sys.__stdout__
+            bpy.ops.object.mode_set(mode='OBJECT')
+        print()
+        return {'FINISHED'}
+
+
 class HideRelationshipLines(bpy.types.Operator):
     """Hide relationship lines in every 3D View"""
     bl_idname = "wm.jaspergetools_hide_relationship_lines"
@@ -607,6 +682,14 @@ class JaspergeToolsSettings(bpy.types.PropertyGroup):
         default=40,
         min=0,
         max=180)
+
+    inside = BoolProperty(
+        name="Inside",
+        default=False)
+
+    threshold = FloatProperty(
+        name="Merge Distance",
+        default=0.0001)
 
 
 class JaspergeToolsPanel(bpy.types.Panel):
@@ -672,6 +755,12 @@ class JaspergeToolsPanel(bpy.types.Panel):
         row = col.row(align=True)
         row.operator("object.jaspergetools_set_normal_angle")
         row.prop(wm.jasperge_tools_settings, "normal_angle")
+        row = col.row(align=True)
+        row.operator("object.jasperge_tools_make_normals_consistent")
+        row.prop(wm.jasperge_tools_settings, "inside", toggle=True)
+        row = col.row(align=True)
+        row.operator("object.jasperge_tools_remove_doubles")
+        row.prop(wm.jasperge_tools_settings, "threshold")
 
         # Renaming options
         box = layout.box()
@@ -740,21 +829,23 @@ def register():
     bpy.utils.register_module(__name__)
     bpy.types.WindowManager.jasperge_tools_settings = bpy.props.PointerProperty(type=JaspergeToolsSettings)
     wm = bpy.context.window_manager
-    for mode in ("Object Mode",
-                 "Mesh",
-                 "Curve",
-                 "Armature",
-                 "Metaball",
-                 "Lattice",
-                 "Font",
-                 "Pose",
-                 "Vertex Paint",
-                 "Weight Paint",
-                 "Sculpt",
-                 ):
-        km = wm.keyconfigs.addon.keymaps.new(name=mode)
-        kmi = km.keymap_items.new("wm.call_menu", "Q", "PRESS", shift=True)
-        kmi.properties.name = "VIEW3D_MT_jasperge_tools_menu"
+    kc = wm.keyconfigs.addon
+    if kc:  # don't register keymaps from command line
+        for mode in ("Object Mode",
+                     "Mesh",
+                     "Curve",
+                     "Armature",
+                     "Metaball",
+                     "Lattice",
+                     "Font",
+                     "Pose",
+                     "Vertex Paint",
+                     "Weight Paint",
+                     "Sculpt",
+                     ):
+            km = kc.keymaps.new(name=mode)
+            kmi = km.keymap_items.new("wm.call_menu", "Q", "PRESS", shift=True)
+            kmi.properties.name = "VIEW3D_MT_jasperge_tools_menu"
     bpy.app.handlers.load_post.append(update_jasperge_settings)
 
 
