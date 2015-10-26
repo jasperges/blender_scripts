@@ -691,6 +691,26 @@ class JaspergeToolsSettings(bpy.types.PropertyGroup):
         name="Merge Distance",
         default=0.0001)
 
+    file_settings = BoolProperty(
+        name="File",
+        default=False)
+
+    modifier_settings = BoolProperty(
+        name="Modifiers",
+        default=False)
+
+    object_settings = BoolProperty(
+        name="Object",
+        default=False)
+
+    rename_settings = BoolProperty(
+        name="Rename",
+        default=False)
+
+    general_settings = BoolProperty(
+        name="General",
+        default=False)
+
 
 class JaspergeToolsPanel(bpy.types.Panel):
     bl_label = "jasperge tools"
@@ -707,78 +727,113 @@ class JaspergeToolsPanel(bpy.types.Panel):
         # File options
         box = layout.box()
         col = box.column(align=False)
-        col.label(text="File:")
-        col.operator("file.incremental_save")
-        col.separator()
-        col = box.column(align=True)
-        row = col.row(align=True)
-        row.prop(wm.jasperge_tools_settings, "version")
-        row.prop(wm.jasperge_tools_settings, "padding")
-        col.operator("file.update_version")
+        if wm.jasperge_tools_settings.file_settings:
+            file_icon = 'TRIA_DOWN'
+        else:
+            file_icon = 'TRIA_RIGHT'
+        col.prop(wm.jasperge_tools_settings, "file_settings",
+                 icon=file_icon, toggle=True)
+        if wm.jasperge_tools_settings.file_settings:
+            # col.label(text="File:")
+            col.operator("file.incremental_save")
+            col.separator()
+            col = box.column(align=True)
+            row = col.row(align=True)
+            row.prop(wm.jasperge_tools_settings, "version")
+            row.prop(wm.jasperge_tools_settings, "padding")
+            col.operator("file.update_version")
 
         # Modifier options
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="Modifiers:")
-        col.operator("object.copy_modifier_settings", text="Copy Settings")
-        row = col.row(align=True)
-        row.operator("object.modifier_viewport_on", text="Viewport On")
-        row.operator("object.modifier_viewport_off", text="Viewport Off")
-        row = col.row(align=True)
-        row.operator("object.modifier_mirror_toggle",
-                     text="Mirror On").use_mirror = True
-        row.operator("object.modifier_mirror_toggle",
-                     text="Mirror Off").use_mirror = False
-        row = col.row(align=True)
-        row.operator("object.modifier_boolean_toggle",
-                     text="Boolean On").use_boolean = True
-        row.operator("object.modifier_boolean_toggle",
-                     text="Boolean Off").use_boolean = False
-        row = col.row(align=True)
-        row.operator("object.modifier_expand",
-                     text="Expand options").expand = True
-        row.operator("object.modifier_expand",
-                     text="Collapse options").expand = False
-        row = col.row(align=True)
-        row.operator("object.modifier_optimal_subsurf",
-                     text="Optimal display").use_optimal = True
-        row.operator("object.modifier_optimal_subsurf",
-                     text="Non-optimal display").use_optimal = False
+        if wm.jasperge_tools_settings.modifier_settings:
+            modifier_icon = 'TRIA_DOWN'
+        else:
+            modifier_icon = 'TRIA_RIGHT'
+        col.prop(wm.jasperge_tools_settings, "modifier_settings",
+                 icon=modifier_icon, toggle=True)
+        if wm.jasperge_tools_settings.modifier_settings:
+            # col.label(text="Modifiers:")
+            col.operator("object.copy_modifier_settings", text="Copy Settings")
+            row = col.row(align=True)
+            row.operator("object.modifier_viewport_on", text="Viewport On")
+            row.operator("object.modifier_viewport_off", text="Viewport Off")
+            row = col.row(align=True)
+            row.operator("object.modifier_mirror_toggle",
+                         text="Mirror On").use_mirror = True
+            row.operator("object.modifier_mirror_toggle",
+                         text="Mirror Off").use_mirror = False
+            row = col.row(align=True)
+            row.operator("object.modifier_boolean_toggle",
+                         text="Boolean On").use_boolean = True
+            row.operator("object.modifier_boolean_toggle",
+                         text="Boolean Off").use_boolean = False
+            row = col.row(align=True)
+            row.operator("object.modifier_expand",
+                         text="Expand options").expand = True
+            row.operator("object.modifier_expand",
+                         text="Collapse options").expand = False
+            row = col.row(align=True)
+            row.operator("object.modifier_optimal_subsurf",
+                         text="Optimal display").use_optimal = True
+            row.operator("object.modifier_optimal_subsurf",
+                         text="Non-optimal display").use_optimal = False
 
         # Object options
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="Object:")
-        row = col.row(align=True)
-        row.operator("object.wire_on")
-        row.operator("object.wire_off")
-        row = col.row(align=True)
-        row.operator("object.jaspergetools_set_normal_angle")
-        row.prop(wm.jasperge_tools_settings, "normal_angle")
-        row = col.row(align=True)
-        row.operator("object.jasperge_tools_make_normals_consistent")
-        row.prop(wm.jasperge_tools_settings, "inside", toggle=True)
-        row = col.row(align=True)
-        row.operator("object.jasperge_tools_remove_doubles")
-        row.prop(wm.jasperge_tools_settings, "threshold")
+        if wm.jasperge_tools_settings.object_settings:
+            object_icon = 'TRIA_DOWN'
+        else:
+            object_icon = 'TRIA_RIGHT'
+        col.prop(wm.jasperge_tools_settings, "object_settings",
+                 icon=object_icon, toggle=True)
+        if wm.jasperge_tools_settings.object_settings:
+            # col.label(text="Object:")
+            row = col.row(align=True)
+            row.operator("object.wire_on")
+            row.operator("object.wire_off")
+            row = col.row(align=True)
+            row.operator("object.jaspergetools_set_normal_angle")
+            row.prop(wm.jasperge_tools_settings, "normal_angle")
+            row = col.row(align=True)
+            row.operator("object.jasperge_tools_make_normals_consistent")
+            row.prop(wm.jasperge_tools_settings, "inside", toggle=True)
+            row = col.row(align=True)
+            row.operator("object.jasperge_tools_remove_doubles")
+            row.prop(wm.jasperge_tools_settings, "threshold")
 
         # Renaming options
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="Rename:")
-        col.prop(wm.jasperge_tools_settings, "new_name")
-        col.prop(wm.jasperge_tools_settings, "start_number")
-        col.operator("object.hash_rename", "Rename")
+        if wm.jasperge_tools_settings.rename_settings:
+            rename_icon = 'TRIA_DOWN'
+        else:
+            rename_icon = 'TRIA_RIGHT'
+        col.prop(wm.jasperge_tools_settings, "rename_settings",
+                 icon=rename_icon, toggle=True)
+        if wm.jasperge_tools_settings.rename_settings:
+            # col.label(text="Rename:")
+            col.prop(wm.jasperge_tools_settings, "new_name")
+            col.prop(wm.jasperge_tools_settings, "start_number")
+            col.operator("object.hash_rename", "Rename")
 
         # General options
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="General:")
-        # row = col.row(align=True)
-        row = col.split(.5, align=True)
-        row.label(text="Relationship lines:")
-        row.operator("wm.jaspergetools_show_relationship_lines", text="On")
-        row.operator("wm.jaspergetools_hide_relationship_lines", text="Off")
+        if wm.jasperge_tools_settings.general_settings:
+            general_icon = 'TRIA_DOWN'
+        else:
+            general_icon = 'TRIA_RIGHT'
+        col.prop(wm.jasperge_tools_settings, "general_settings",
+                 icon=general_icon, toggle=True)
+        if wm.jasperge_tools_settings.general_settings:
+            # col.label(text="General:")
+            # row = col.row(align=True)
+            row = col.split(.5, align=True)
+            row.label(text="Relationship lines:")
+            row.operator("wm.jaspergetools_show_relationship_lines", text="On")
+            row.operator("wm.jaspergetools_hide_relationship_lines", text="Off")
 
 
 class JaspergeToolsMenu(bpy.types.Menu):
