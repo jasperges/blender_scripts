@@ -22,7 +22,7 @@ bl_info = {
     "version": (0, 5),
     "blender": (2, 7, 1),
     "location": "View3D > Toolbar",
-    "description": "Simple tool to select the first/last/previous/next point on a curve.",
+    "description": "Simple tool to select the first/last/previous/next point on a curve",
     "warning": "",
     "wiki_url": "",
     "category": "3D View"}
@@ -221,7 +221,7 @@ class CURVE_OT_select_point(bpy.types.Operator):
                       ("FIRST", "First", "Select the first point of the curve."),
                       ("LAST", "Last", "Select the last point of the curve.")]
     action = EnumProperty(name="Action",
-                          description="Choose the select action to use.",
+                          description="Choose the select action to use",
                           items=select_options,
                           default="NEXT")
 
