@@ -463,12 +463,11 @@ class FILE_update_version(bpy.types.Operator):
         wm = bpy.context.window_manager
         self.version = wm.jasperge_tools_settings.version
         self.padding = wm.jasperge_tools_settings.padding
-        self.update_filename()
-        self.update_renderpath()
-
         # Add version number and padding to first scene in file
         bpy.data.scenes[0]["jasperge_tools_file_version"] = self.version
         bpy.data.scenes[0]["jasperge_tools_file_version_padding"] = self.padding
+        self.update_renderpath()
+        self.update_filename()
 
         return {'FINISHED'}
 
@@ -650,6 +649,23 @@ class ShowRelationshipLines(bpy.types.Operator):
                         if space.type == 'VIEW_3D':
                             space.show_relationship_lines = True
         return {'FINISHED'}
+
+
+class SnapMarkerToCurentFrame(bpy.types.Operator):
+    """Snap the selected markers to the current frame"""
+    bl_idname = "marker.jaspergetools_snap_to_current_frame"
+    bl_label = "Snap marker to current frame"
+
+    def execute(self, context):
+        markers = [m for m in context.scene.timeline_markers if m.select]
+        for marker in markers:
+            marker.frame = context.scene.frame_current
+        return {'FINISHED'}
+
+
+def draw_func(self, context):
+    self.layout.operator(
+        MARKER_OT_jaspergetools_snap_to_current_frame.bl_idname)
 
 
 class JaspergeToolsSettings(bpy.types.PropertyGroup):
@@ -901,7 +917,12 @@ def register():
             km = kc.keymaps.new(name=mode)
             kmi = km.keymap_items.new("wm.call_menu", "Q", "PRESS", shift=True)
             kmi.properties.name = "VIEW3D_MT_jasperge_tools_menu"
+            jasperge_tools_keymaps.append(km)
+        km = kc.keymaps.new('Timeline', space_type='TIMELINE', region_type='WINDOW', modal=False)
+        kmi = km.keymap_items.new('marker.jaspergetools_snap_to_current_frame', 'S', 'PRESS', shift=True)
+        jasperge_tools_keymaps.append(km)
     bpy.app.handlers.load_post.append(update_jasperge_settings)
+    bpy.types.TIME_MT_marker.append(draw_func)
 
 
 def unregister():
@@ -915,6 +936,7 @@ def unregister():
     for h in bpy.app.handlers.load_post:
         if h.__name__ == "update_jasperge_settings":
             bpy.app.handlers.load_post.remove(h)
+    bpy.types.TIME_MT_marker.remove(draw_func)
 
 
 if __name__ == "__main__":
