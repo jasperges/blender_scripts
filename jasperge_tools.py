@@ -902,24 +902,12 @@ def register():
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
     if kc:  # don't register keymaps from command line
-        for mode in ("Object Mode",
-                     "Mesh",
-                     "Curve",
-                     "Armature",
-                     "Metaball",
-                     "Lattice",
-                     "Font",
-                     "Pose",
-                     "Vertex Paint",
-                     "Weight Paint",
-                     "Sculpt",
-                     ):
-            km = kc.keymaps.new(name=mode)
-            kmi = km.keymap_items.new("wm.call_menu", "Q", "PRESS", shift=True)
-            kmi.properties.name = "VIEW3D_MT_jasperge_tools_menu"
-            jasperge_tools_keymaps.append(km)
-        km = kc.keymaps.new('Timeline', space_type='TIMELINE', region_type='WINDOW', modal=False)
-        kmi = km.keymap_items.new('marker.jaspergetools_snap_to_current_frame', 'S', 'PRESS', shift=True)
+        km = kc.keymaps.new(name="Window", space_type='EMPTY', region_type='WINDOW')
+        kmi = km.keymap_items.new("wm.call_menu", "Q", "PRESS", shift=True)
+        kmi.properties.name = "VIEW3D_MT_jasperge_tools_menu"
+        jasperge_tools_keymaps.append(km)
+        km = kc.keymaps.new("Timeline", space_type='TIMELINE', region_type='WINDOW')
+        kmi = km.keymap_items.new("marker.jaspergetools_snap_to_current_frame", 'S', 'PRESS', shift=True)
         jasperge_tools_keymaps.append(km)
     bpy.app.handlers.load_post.append(update_jasperge_settings)
     bpy.types.TIME_MT_marker.append(draw_func)
