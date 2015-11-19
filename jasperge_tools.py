@@ -621,6 +621,26 @@ class RemoveDoubles(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class FreeCustomSplitNormals(bpy.types.Operator):
+    """Remove the custom split normals layer of all selected objects"""
+    bl_idname = "object.jasperge_tools_clear_custom_split_normals"
+    bl_label = "Clear Custom Split Normals Data"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        print("\nRecalculating the normals of all selected objects")
+        for i, obj in enumerate(context.selected_objects):
+            print_progress(i, max=len(context.selected_objects) - 1, item=obj.name)
+            context.scene.objects.active = obj
+            bpy.ops.mesh.customdata_custom_splitnormals_clear()
+        print()
+        return {'FINISHED'}
+
+
 class HideRelationshipLines(bpy.types.Operator):
     """Hide relationship lines in every 3D View"""
     bl_idname = "wm.jaspergetools_hide_relationship_lines"
@@ -818,6 +838,7 @@ class JaspergeToolsPanel(bpy.types.Panel):
             row = col.row(align=True)
             row.operator("object.jasperge_tools_remove_doubles")
             row.prop(wm.jasperge_tools_settings, "threshold")
+            col.operator("object.jasperge_tools_clear_custom_split_normals")
 
         # Renaming options
         box = layout.box()
