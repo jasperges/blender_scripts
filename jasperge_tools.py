@@ -61,7 +61,7 @@ from bpy.props import StringProperty, IntProperty, BoolProperty, FloatProperty
 
 
 ### Helper functions
-def print_progress(progress, min=0, max=100, barlen=30, item=""):
+def print_progress(progress, min=0, max=100, barlen=30, item="", line_length=120):
     if max <= min:
         return
     total_len = max - min
@@ -70,7 +70,7 @@ def print_progress(progress, min=0, max=100, barlen=30, item=""):
     percentage = "".join((str(int((progress - min) / total_len * 100)), "%"))
     item = "".join(("  --  ", item))
     bar = "".join(("[", bar_progress, bar_empty, "]", " ", percentage, item))
-    bar = "".join((bar, (130 - len(bar)) * " "))
+    bar = "".join((bar, (line_length - len(bar)) * " "))[:line_length]
     print(bar, end="\r")
 
 
@@ -582,6 +582,8 @@ class MakeNormalsConsistent(bpy.types.Operator):
         self.inside = wm.jasperge_tools_settings.inside
         print("\nRecalculating the normals of all selected objects")
         for i, obj in enumerate(context.selected_objects):
+            if not obj.type == 'MESH':
+                continue
             print_progress(i, max=len(context.selected_objects) - 1, item=obj.name)
             context.scene.objects.active = obj
             bpy.ops.object.mode_set(mode='EDIT')
@@ -610,6 +612,8 @@ class RemoveDoubles(bpy.types.Operator):
         self.threshold = wm.jasperge_tools_settings.threshold
         print("\nRemoving double vertices of all selected objects")
         for i, obj in enumerate(context.selected_objects):
+            if not obj.type == 'MESH':
+                continue
             print_progress(i, max=len(context.selected_objects) - 1, item=obj.name)
             context.scene.objects.active = obj
             bpy.ops.object.mode_set(mode='EDIT')
@@ -634,6 +638,8 @@ class FreeCustomSplitNormals(bpy.types.Operator):
     def execute(self, context):
         print("\nRecalculating the normals of all selected objects")
         for i, obj in enumerate(context.selected_objects):
+            if not obj.type == 'MESH':
+                continue
             print_progress(i, max=len(context.selected_objects) - 1, item=obj.name)
             context.scene.objects.active = obj
             bpy.ops.mesh.customdata_custom_splitnormals_clear()
