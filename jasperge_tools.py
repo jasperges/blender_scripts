@@ -587,6 +587,7 @@ class MakeNormalsConsistent(bpy.types.Operator):
             print_progress(i, max=len(context.selected_objects) - 1, item=obj.name)
             context.scene.objects.active = obj
             bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.normals_make_consistent(inside=self.inside)
             bpy.ops.object.mode_set(mode='OBJECT')
         print()
