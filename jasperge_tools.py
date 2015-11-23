@@ -57,7 +57,7 @@ from math import radians
 from io import StringIO
 import bpy
 from bpy.app.handlers import persistent
-from bpy.props import StringProperty, IntProperty, BoolProperty, FloatProperty
+from bpy.props import StringProperty, IntProperty, BoolProperty, FloatProperty, EnumProperty
 
 
 ### Helper functions
@@ -75,7 +75,7 @@ def print_progress(progress, min=0, max=100, barlen=30, item="", line_length=120
 
 
 ### Operators and other classes
-class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
+class CopyModifierSettings(bpy.types.Operator):
     """Copy settings of modifiers from active object to """
     """all other selected objects."""
 
@@ -162,7 +162,7 @@ class OBJECT_OT_copy_modifier_settings(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
+class ModifierViewportOff(bpy.types.Operator):
     """Turn off all the modifiers (except 'ARMATURE', 'CURVE',
        'MIRROR' and 'SIMPLE_DEFORM) in the viewport."""
 
@@ -186,7 +186,7 @@ class OBJECT_OT_modifier_viewport_off(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_modifier_viewport_on(bpy.types.Operator):
+class ModifierViewportOn(bpy.types.Operator):
     """Turn on all the modifiers in the viewport."""
 
     bl_description = "Turn on all modifiers in the viewport"
@@ -205,7 +205,7 @@ class OBJECT_OT_modifier_viewport_on(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_modifier_mirror_toggle(bpy.types.Operator):
+class ModifierMirrorToggle(bpy.types.Operator):
     """Turn on/off the 'MIRROR' modifiers for all objects in the viewport."""
 
     bl_description = "Turn on/off the 'MIRROR' modifiers for all objects in the viewport"
@@ -229,7 +229,7 @@ class OBJECT_OT_modifier_mirror_toggle(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_modifier_boolean_toggle(bpy.types.Operator):
+class ModifierBooleanToggle(bpy.types.Operator):
     """Turn on/off the 'BOOLEAN' modifiers for all objects in the viewport."""
 
     bl_description = "Turn on/off the 'BOOLEAN' modifiers for all objects in the viewport"
@@ -253,7 +253,7 @@ class OBJECT_OT_modifier_boolean_toggle(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_modifier_expand(bpy.types.Operator):
+class ModifierExpand(bpy.types.Operator):
     """Expand or collapse all modifier options."""
 
     bl_description = "Expand or collapse all modifier options"
@@ -282,7 +282,7 @@ class OBJECT_OT_modifier_expand(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_modifier_subsurf_optimal(bpy.types.Operator):
+class ModifierSubsurfOptimal(bpy.types.Operator):
     """Turn on/off optimal display for all subsurf modifiers."""
 
     bl_description = "Turn on optimal display for all subsurf modifiers"
@@ -307,11 +307,11 @@ class OBJECT_OT_modifier_subsurf_optimal(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_wire_on(bpy.types.Operator):
+class WireOn(bpy.types.Operator):
     """Turn on the wire display option for all mesh objects."""
 
     bl_description = "Turn on the wire display option for all mesh objects"
-    bl_idname = "object.wire_on"
+    bl_idname = "object.jaspergetools_wire_on"
     bl_label = "Wire on"
     bl_space_type = 'VIEW_3D'
 
@@ -324,7 +324,7 @@ class OBJECT_OT_wire_on(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_wire_off(bpy.types.Operator):
+class WireOff(bpy.types.Operator):
     """Turn off the wire display option for all mesh objects."""
 
     bl_description = "Turn off the wire display option for all mesh objects"
@@ -341,7 +341,7 @@ class OBJECT_OT_wire_off(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class FILE_incremental_save(bpy.types.Operator):
+class IncrementalSave(bpy.types.Operator):
     """Do an incremental save for the file (like in Maya).
 
     Saves the file with the current name, but also saves a copy in the
@@ -415,7 +415,7 @@ class FILE_incremental_save(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class FILE_update_version(bpy.types.Operator):
+class UpdateVersion(bpy.types.Operator):
     """Update the version of the filename and the render path.
 
     E.g.: filename: my_blend_file_v010.blend -> my_blend_file_v011.blend
@@ -424,6 +424,10 @@ class FILE_update_version(bpy.types.Operator):
     bl_description = "Update the version of the filename and the render path"
     bl_idname = "file.jaspergetools_update_version"
     bl_label = "Update version"
+
+    @classmethod
+    def poll(cls, context):
+        return bpy.data.filepath
 
     version = IntProperty(
         name="Version",
@@ -472,7 +476,7 @@ class FILE_update_version(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class OBJECT_OT_hash_rename(bpy.types.Operator):
+class HashRename(bpy.types.Operator):
     """Hash rename all selected objects."""
 
     bl_description = "Hash rename all selected objects"
@@ -519,7 +523,7 @@ class OBJECT_OT_hash_rename(bpy.types.Operator):
             return new_name
 
     def execute(self, context):
-        wm = bpy.context.window_manager
+        wm = context.window_manager
         self.new_name = wm.jasperge_tools_settings.new_name
         self.start_number = wm.jasperge_tools_settings.start_number
         new_name = self.parse_new_name(self.new_name)
@@ -537,6 +541,33 @@ class OBJECT_OT_hash_rename(bpy.types.Operator):
 class ObjectNamePrefixSuffix(bpy.types.Operator):
     """Add a prefix or suffix to all selected object names"""
     bl_idname = "object.jaspergetools_presuffix"
+    bl_label = "Add pre- or suffix"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+
+    fix = StringProperty(
+        name="Pre-/suffix",
+        default="")
+
+    xfix = EnumProperty(
+        name="Pre-/suffix",
+        description="Choose wether to add a prefix or a suffix",
+        items=(('PREFIX', "Prefix", "Set a prefix"),
+               ('SUFFIX', "Suffix", "Set a suffix")),
+        default='PREFIX')
+
+    def execute(self, context):
+        wm = context.window_manager
+        self.fix = wm.jasperge_tools_settings.fix
+        self.xfix = wm.jasperge_tools_settings.xfix
+        for obj in context.selected_objects:
+            if self.xfix == 'PREFIX':
+                obj.name = "".join((fix, obj.name))
+            else:
+                obj.name = "".join((obj.name, fix))
 
 
 class SetNormalAngle(bpy.types.Operator):
@@ -713,6 +744,18 @@ class JaspergeToolsSettings(bpy.types.PropertyGroup):
         default=1,
         min=0)
 
+    fix = StringProperty(
+        name="Pre-/suffix",
+        description="The prefix or suffix to add to the object names",
+        default="")
+
+    xfix = EnumProperty(
+        name="Pre-/suffix",
+        description="Choose wether to add a prefix or a suffix",
+        items=(('PREFIX', "Prefix", "Set a prefix"),
+               ('SUFFIX', "Suffix", "Set a suffix")),
+        default='PREFIX')
+
     version = IntProperty(
         name="Version",
         description="The new version number for the file",
@@ -783,13 +826,13 @@ class JaspergeToolsPanel(bpy.types.Panel):
                  icon=file_icon, toggle=True)
         if wm.jasperge_tools_settings.file_settings:
             # col.label(text="File:")
-            col.operator("file.incremental_save")
+            col.operator("file.jaspergetools_incremental_save")
             col.separator()
             col = box.column(align=True)
             row = col.row(align=True)
             row.prop(wm.jasperge_tools_settings, "version")
             row.prop(wm.jasperge_tools_settings, "padding")
-            col.operator("file.update_version")
+            col.operator("file.jaspergetools_update_version")
 
         # Modifier options
         box = layout.box()
@@ -802,29 +845,29 @@ class JaspergeToolsPanel(bpy.types.Panel):
                  icon=modifier_icon, toggle=True)
         if wm.jasperge_tools_settings.modifier_settings:
             # col.label(text="Modifiers:")
-            col.operator("object.copy_modifier_settings", text="Copy Settings")
+            col.operator("object.jaspergetools_copy_modifier_settings", text="Copy Settings")
             row = col.row(align=True)
-            row.operator("object.modifier_viewport_on", text="Viewport On")
-            row.operator("object.modifier_viewport_off", text="Viewport Off")
+            row.operator("object.jaspergetools_modifier_viewport_on", text="Viewport On")
+            row.operator("object.jaspergetools_modifier_viewport_off", text="Viewport Off")
             row = col.row(align=True)
-            row.operator("object.modifier_mirror_toggle",
+            row.operator("object.jaspergetools_modifier_mirror_toggle",
                          text="Mirror On").use_mirror = True
-            row.operator("object.modifier_mirror_toggle",
+            row.operator("object.jaspergetools_modifier_mirror_toggle",
                          text="Mirror Off").use_mirror = False
             row = col.row(align=True)
-            row.operator("object.modifier_boolean_toggle",
+            row.operator("object.jaspergetools_modifier_boolean_toggle",
                          text="Boolean On").use_boolean = True
-            row.operator("object.modifier_boolean_toggle",
+            row.operator("object.jaspergetools_modifier_boolean_toggle",
                          text="Boolean Off").use_boolean = False
             row = col.row(align=True)
-            row.operator("object.modifier_expand",
+            row.operator("object.jaspergetools_modifier_expand",
                          text="Expand options").expand = True
-            row.operator("object.modifier_expand",
+            row.operator("object.jaspergetools_modifier_expand",
                          text="Collapse options").expand = False
             row = col.row(align=True)
-            row.operator("object.modifier_optimal_subsurf",
+            row.operator("object.jaspergetools_modifier_optimal_subsurf",
                          text="Optimal display").use_optimal = True
-            row.operator("object.modifier_optimal_subsurf",
+            row.operator("object.jaspergetools_modifier_optimal_subsurf",
                          text="Non-optimal display").use_optimal = False
 
         # Object options
@@ -839,8 +882,8 @@ class JaspergeToolsPanel(bpy.types.Panel):
         if wm.jasperge_tools_settings.object_settings:
             # col.label(text="Object:")
             row = col.row(align=True)
-            row.operator("object.wire_on")
-            row.operator("object.wire_off")
+            row.operator("object.jaspergetools_wire_on")
+            row.operator("object.jaspergetools_wire_off")
             row = col.row(align=True)
             row.operator("object.jaspergetools_set_normal_angle")
             row.prop(wm.jasperge_tools_settings, "normal_angle")
@@ -864,8 +907,20 @@ class JaspergeToolsPanel(bpy.types.Panel):
         if wm.jasperge_tools_settings.rename_settings:
             # col.label(text="Rename:")
             col.prop(wm.jasperge_tools_settings, "new_name")
-            col.prop(wm.jasperge_tools_settings, "start_number")
-            col.operator("object.hash_rename", "Rename")
+            row = col.row(align=True)
+            split = row.split(percentage=.33, align=True)
+            split.prop(wm.jasperge_tools_settings, "start_number")
+            split.operator("object.jaspergetools_hash_rename", "Rename")
+            col.separator()
+            row = col.row(align=True)
+            split = row.split(percentage=0.33, align=True)
+            split.prop(wm.jasperge_tools_settings, "xfix", text="")
+            if wm.jasperge_tools_settings.xfix == 'PREFIX':
+                op_text = "Add prefix"
+            else:
+                op_text = "Add suffix"
+            split.prop(wm.jasperge_tools_settings, "fix", text="")
+            col.operator("object.jaspergetools_presuffix", text=op_text)
 
         # General options
         box = layout.box()
@@ -892,18 +947,18 @@ class JaspergeToolsMenu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("file.incremental_save",
+        layout.operator("file.jaspergetools_incremental_save",
                         icon='SAVE_COPY')
         # layout.operator("file.update_version")
         layout.separator()
-        layout.operator("object.copy_modifier_settings",)
-        layout.operator("object.modifier_viewport_on",)
-        layout.operator("object.modifier_viewport_off",)
+        layout.operator("object.jaspergetools_copy_modifier_settings",)
+        layout.operator("object.jaspergetools_modifier_viewport_on",)
+        layout.operator("object.jaspergetools_modifier_viewport_off",)
         layout.separator()
-        layout.operator("object.wire_on",
+        layout.operator("object.jaspergetools_wire_on",
                         #text="Wireframe Display On",
                         icon='MESH_GRID')
-        layout.operator("object.wire_off",
+        layout.operator("object.jaspergetools_wire_off",
                         #text="Wireframe Display Off",
                         icon='MESH_PLANE')
         layout.separator()
@@ -913,7 +968,7 @@ class JaspergeToolsMenu(bpy.types.Menu):
                         icon='MESH_UVSPHERE')
         layout.separator()
         # layout.operator_context = 'INVOKE_DEFAULT'
-        layout.operator("object.hash_rename", "Rename")
+        layout.operator("object.jaspergetools_hash_rename", "Rename")
 
 
 @persistent
