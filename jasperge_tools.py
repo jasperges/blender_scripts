@@ -548,16 +548,16 @@ class ObjectNamePrefixSuffix(bpy.types.Operator):
     def poll(cls, context):
         return context.object
 
-    fix = StringProperty(
-        name="Pre-/suffix",
-        default="")
-
     xfix = EnumProperty(
-        name="Pre-/suffix",
+        name="Add a prefix or a suffix",
         description="Choose wether to add a prefix or a suffix",
         items=(('PREFIX', "Prefix", "Set a prefix"),
                ('SUFFIX', "Suffix", "Set a suffix")),
         default='PREFIX')
+
+    fix = StringProperty(
+        name="The prefix or suffix",
+        default="")
 
     def execute(self, context):
         wm = context.window_manager
@@ -565,9 +565,10 @@ class ObjectNamePrefixSuffix(bpy.types.Operator):
         self.xfix = wm.jasperge_tools_settings.xfix
         for obj in context.selected_objects:
             if self.xfix == 'PREFIX':
-                obj.name = "".join((fix, obj.name))
+                obj.name = "".join((self.fix, obj.name))
             else:
-                obj.name = "".join((obj.name, fix))
+                obj.name = "".join((obj.name, self.fix))
+        return {'FINISHED'}
 
 
 class SetNormalAngle(bpy.types.Operator):
@@ -744,17 +745,17 @@ class JaspergeToolsSettings(bpy.types.PropertyGroup):
         default=1,
         min=0)
 
-    fix = StringProperty(
-        name="Pre-/suffix",
-        description="The prefix or suffix to add to the object names",
-        default="")
-
     xfix = EnumProperty(
         name="Pre-/suffix",
         description="Choose wether to add a prefix or a suffix",
         items=(('PREFIX', "Prefix", "Set a prefix"),
                ('SUFFIX', "Suffix", "Set a suffix")),
         default='PREFIX')
+
+    fix = StringProperty(
+        name="Pre-/suffix",
+        description="The prefix or suffix to add to the object names",
+        default="")
 
     version = IntProperty(
         name="Version",
