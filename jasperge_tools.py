@@ -463,6 +463,14 @@ class UpdateVersion(bpy.types.Operator):
         new_render_path = version_str.join(re.split(r"v\d+", render_path))
         bpy.context.scene.render.filepath = new_render_path
 
+    def update_stamp(self):
+        version = self.version
+        padding = self.padding
+        stamp_note = bpy.context.scene.render.stamp_note_text
+        version_str = self.version_to_string(version, padding)
+        new_stamp_note = version_str.join(re.split(r"v\d+", stamp_note))
+        bpy.context.scene.render.stamp_note_text = new_stamp_note
+
     def execute(self, context):
         wm = bpy.context.window_manager
         self.version = wm.jasperge_tools_settings.version
@@ -471,6 +479,7 @@ class UpdateVersion(bpy.types.Operator):
         bpy.data.scenes[0]["jasperge_tools_file_version"] = self.version
         bpy.data.scenes[0]["jasperge_tools_file_version_padding"] = self.padding
         self.update_renderpath()
+        self.update_stamp()
         self.update_filename()
 
         return {'FINISHED'}
