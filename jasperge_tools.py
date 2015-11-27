@@ -727,6 +727,59 @@ class SnapMarkerToCurentFrame(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ASNAddDrawTag(bpy.types.Operator):
+    """Add a draw tag to all selected objects"""
+    bl_idname = "object.jaspergetools_add_draw_tag"
+    bl_label = "Add a draw tag to all selected objects"
+
+    # draw_tag = EnumProperty(
+    #     name='Draw Tag',
+    #     description='draw tag',
+    #     items=(('SOLID', 'Solid', 'Solid'),
+    #            ('TEXTURED', 'Textured', 'Textured')),
+    #     default='SOLID')
+    # draw_tag = None
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+
+    def execute(self, context):
+        wm = bpy.context.window_manager
+        self.draw_tag = wm.jasperge_tools_settings.draw_tag
+        for obj in context.selected_objects:
+            obj['asn_draw_tag'] = self.draw_tag
+
+        return {'FINISHED'}
+
+
+class ASNSetDawType(bpy.types.Operator):
+    """Set the draw type of all objects (checking asn_draw_tag)"""
+    bl_idname = "object.jaspergetools_set_draw_type"
+    bl_label = "Set the draw type of all objects (checking asn_draw_tag)"
+
+    # draw_tag = EnumProperty(
+    #     name='Draw Tag',
+    #     description='draw tag',
+    #     items=(('SOLID', 'Solid', 'Solid'),
+    #            ('TEXTURED', 'Textured', 'Textured')),
+    #     default='SOLID')
+    # draw_tag = None
+
+    @classmethod
+    def poll(cls, context):
+        return context.object
+
+    def execute(self, context):
+        wm = bpy.context.window_manager
+        self.draw_tag = wm.jasperge_tools_settings.draw_tag
+        for obj in bpy.data.objects:
+            draw_tag = obj.get('asn_draw_tag', self.draw_tag)
+            obj.draw_type = draw_tag
+
+        return {'FINISHED'}
+
+
 def draw_func(self, context):
     self.layout.operator(
         MARKER_OT_jaspergetools_snap_to_current_frame.bl_idname)
@@ -802,6 +855,19 @@ class JaspergeToolsSettings(bpy.types.PropertyGroup):
     general_settings = BoolProperty(
         name="General",
         default=False)
+
+    asn_settings = BoolProperty(
+        name="ASN",
+        default=False)
+
+    draw_tag = EnumProperty(
+        name='Draw Tag',
+        description='draw tag',
+        items=(('BOUNDS', 'Bounds', 'Bounds'),
+               ('WIRE', 'Wire', 'Wire'),
+               ('SOLID', 'Solid', 'Solid'),
+               ('TEXTURED', 'Textured', 'Textured')),
+        default='SOLID')
 
 
 class JaspergeToolsPanel(bpy.types.Panel):
@@ -939,6 +1005,21 @@ class JaspergeToolsPanel(bpy.types.Panel):
             row.label(text="Relationship lines:")
             row.operator("wm.jaspergetools_show_relationship_lines", text="On")
             row.operator("wm.jaspergetools_hide_relationship_lines", text="Off")
+
+        # ASN options
+        box = layout.box()
+        col = box.column(align=True)
+        if wm.jasperge_tools_settings.asn_settings:
+            object_icon = 'TRIA_DOWN'
+        else:
+            object_icon = 'TRIA_RIGHT'
+        col.prop(wm.jasperge_tools_settings, "asn_settings",
+                 icon=object_icon, toggle=True)
+        if wm.jasperge_tools_settings.asn_settings:
+            col.prop(wm.jasperge_tools_settings, "draw_tag", text="")
+            row = col.row(align=True)
+            row.operator("object.jaspergetools_add_draw_tag", text="Add/Change Tag")
+            row.operator("object.jaspergetools_set_draw_type", text="Set Draw Type")
 
 
 class JaspergeToolsMenu(bpy.types.Menu):
