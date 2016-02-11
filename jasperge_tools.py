@@ -741,14 +741,6 @@ class ASNAddDrawTag(bpy.types.Operator):
     bl_idname = "object.jaspergetools_add_draw_tag"
     bl_label = "Add a draw tag to all selected objects"
 
-    # draw_tag = EnumProperty(
-    #     name='Draw Tag',
-    #     description='draw tag',
-    #     items=(('SOLID', 'Solid', 'Solid'),
-    #            ('TEXTURED', 'Textured', 'Textured')),
-    #     default='SOLID')
-    # draw_tag = None
-
     @classmethod
     def poll(cls, context):
         return context.object
@@ -767,14 +759,6 @@ class ASNSetDawType(bpy.types.Operator):
     bl_idname = "object.jaspergetools_set_draw_type"
     bl_label = "Set the draw type of all objects (checking asn_draw_tag)"
 
-    # draw_tag = EnumProperty(
-    #     name='Draw Tag',
-    #     description='draw tag',
-    #     items=(('SOLID', 'Solid', 'Solid'),
-    #            ('TEXTURED', 'Textured', 'Textured')),
-    #     default='SOLID')
-    # draw_tag = None
-
     @classmethod
     def poll(cls, context):
         return context.object
@@ -785,6 +769,120 @@ class ASNSetDawType(bpy.types.Operator):
         for obj in bpy.data.objects:
             draw_tag = obj.get('asn_draw_tag', self.draw_tag)
             obj.draw_type = draw_tag
+
+        return {'FINISHED'}
+
+
+class ASNSelectASNTaggedObjects(bpy.types.Operator):
+    """Select all objects that have the 'asn_draw_tag'"""
+    bl_idname = "object.jaspergetools_select_asn_tagged_objects"
+    bl_label = "Select all objects that have the 'asn_draw_tag'"
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene and context.scene.objects
+
+    def execute(self, context):
+        for obj in context.scene.objects:
+            if obj.get('asn_draw_tag'):
+                obj.select = True
+            else:
+                obj.select = False
+
+        return {'FINISHED'}
+
+
+class ASNSetGroupOffset(bpy.types.Operator):
+    """Add a group offset (only x-axis) for instancing, based on the selected object(s)"""
+    bl_idname = "object.jaspergetools_set_asn_group_offset"
+    bl_label = "Add a group offset for instancing based on the selected object(s)"
+
+    @classmethod
+    def poll(cls, context):
+        return context.object and context.object.users_group
+
+    def execute(self, context):
+        for obj in context.selected_objects:
+            try:
+                obj.users_group[0].dupli_offset.x = obj.location.x
+            except IndexError:
+                continue
+
+        return {'FINISHED'}
+
+
+class ASNMaterialRamp(bpy.types.Operator):
+    """Set material ramp on selected objects"""
+    bl_idname = "material.jaspergetools_set_asn_material_ramp"
+    bl_label = "Set material ramp on selected objects"
+
+    @classmethod
+    def poll(cls, context):
+        return context.object and context.object.material_slots
+
+    def execute(self, context):
+        for obj in context.selected_objects:
+            for ms in obj.material_slots:
+                if ms.material:
+                    m = ms.material
+                    if not m.use_nodes and not m.use_diffuse_ramp:
+                        m.use_diffuse_ramp = True
+                        m.diffuse_ramp_input = 'RESULT'
+                        m.diffuse_ramp.interpolation = 'EASE'
+                        c = m.diffuse_color.copy()
+                        m.diffuse_color = (.5, .5, .5)
+                        first_color = c.copy()
+                        second_color = c.copy()
+                        first_color.h = (c.h + .05) % 1
+                        first_color.s = min(first_color.s + .3, .95)
+                        first_color.v = max(first_color.v - .4, .15)
+                        second_color.h = (c.h - .02) % 1
+                        second_color.s -= .2
+                        second_color.v = min(second_color + .1, .95)
+                        m.diffuse_ramp.elements[0].position = .175
+                        m.diffuse_ramp.elements[0].color = (first_color.r, first_color.g, first_color.b, 1)
+                        m.diffuse_ramp.elements[1].position = .5
+                        m.diffuse_ramp.elements[1].color = (second_color.r, second_color.g, second_color.b, 1)
+                        ne = m.diffuse_ramp.elements.new(.3375)
+                        ne.color = (c.r, c.g, c.b, 1)
+
+        return {'FINISHED'}
+
+
+class ASNSetRenderLayerLayers(bpy.types.Operator):
+    """Set the layers of the active render layer according to the scene layers"""
+    bl_idname = "scene.jaspergetools_set_renderlayer_layers"
+    bl_label = "Set the layers of the active render layer according to the scene layers"
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.render.engine == 'CYCLES'
+
+    def execute(self, context):
+        wm = bpy.context.window_manager
+        self.set_exclude_layers = wm.jasperge_tools_settings.set_exclude_layers
+        self.set_mask_layers = wm.jasperge_tools_settings.set_mask_layers
+
+        scene = context.scene
+        layers = scene.layers
+        render_layer = scene.render.layers.active
+
+        render_layer.layers = layers
+
+        if self.set_exclude_layers:
+            render_layer.layers_exclude = [not(l) for l in layers]
+        if self.set_mask_layers:
+            rl_layers = 20 * [False]
+            rl_layers[scene.active_layer] = True
+            render_layer.layers = rl_layers
+            # render_layer.layers[scene.active_layer] = True
+            mask_layers = list(layers)
+            mask_layers[scene.active_layer] = False
+            render_layer.layers_zmask = mask_layers
+        if not self.set_exclude_layers:
+            render_layer.layers_exclude = 20 * [False]
+        if not self.set_mask_layers:
+            render_layer.layers_zmask = 20 * [False]
 
         return {'FINISHED'}
 
@@ -877,6 +975,14 @@ class JaspergeToolsSettings(bpy.types.PropertyGroup):
                ('SOLID', 'Solid', 'Solid'),
                ('TEXTURED', 'Textured', 'Textured')),
         default='SOLID')
+
+    set_exclude_layers = BoolProperty(
+        name="Set exclude layers",
+        default=True)
+
+    set_mask_layers = BoolProperty(
+        name="Set mask layers",
+        default=False)
 
 
 class JaspergeToolsPanel(bpy.types.Panel):
@@ -1029,6 +1135,15 @@ class JaspergeToolsPanel(bpy.types.Panel):
             row = col.row(align=True)
             row.operator("object.jaspergetools_add_draw_tag", text="Add/Change Tag")
             row.operator("object.jaspergetools_set_draw_type", text="Set Draw Type")
+            col.operator("object.jaspergetools_select_asn_tagged_objects", text="Select tagged objects")
+            col.operator("object.jaspergetools_set_asn_group_offset", text="Set group offset")
+            col.operator("material.jaspergetools_set_asn_material_ramp", text="Set diffuse ramp", icon="MATERIAL")
+            row = col.row(align=True)
+            split = row.split(.4, align=True)
+            sub_row = split.row(align=True)
+            sub_row.prop(wm.jasperge_tools_settings, "set_exclude_layers", toggle=True, text="Exclude")
+            sub_row.prop(wm.jasperge_tools_settings, "set_mask_layers", toggle=True, text="Mask")
+            split.operator("scene.jaspergetools_set_renderlayer_layers", text="Setup render layer layers")
 
 
 class JaspergeToolsMenu(bpy.types.Menu):
